@@ -16,7 +16,23 @@ warn() { printf '  [WARN] %s\n' "$1"; }
 
 echo "== config =="
 if [ -f config.sh ]; then ok "config.sh"
-else cp config.sh.example config.sh; ok "config.sh created from template - edit if tools are not on PATH"; fi
+else
+    # Template lives here, not in a separate .example file - one place to keep in sync.
+    cat > config.sh <<'CFG'
+# config.sh - per-machine settings. Gitignored. Leave everything commented out if all
+# tools are on PATH and the reference genomes live under reference_Genomes/.
+
+# Shared reference root, so lab members reuse the same STAR indexes (~30GB each)
+# REF_ROOT="/data/shared/reference_Genomes"
+
+# Only if fastqc is not on PATH (e.g. a manually downloaded copy)
+# FASTQC_BIN="/home/user/FastQC/fastqc"
+
+# Conda environment to activate automatically
+# CONDA_ENV="bulkrnaseq"
+CFG
+    ok "config.sh created - edit it if tools are not on PATH"
+fi
 source config.sh 2>/dev/null || true
 
 echo "== conda env =="

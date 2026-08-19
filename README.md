@@ -43,7 +43,7 @@ conda create -n bulkrnaseq -c bioconda -c conda-forge \
 
 ### config
 
-`setup.sh` 가 `config.sh.example` 를 `config.sh` 로 복사한다. PATH 에 도구가 다 있으면
+`setup.sh` 가 `config.sh` 를 만들어준다. PATH 에 도구가 다 있으면
 전부 비워둬도 된다. 이미 설치해둔 FastQC 를 쓰려면 `FASTQC_BIN` 을, 랩 공용 참조 게놈이
 있으면 `REF_ROOT` 를 지정한다.
 
