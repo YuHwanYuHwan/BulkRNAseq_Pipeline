@@ -230,16 +230,28 @@ If there are many, pass a file instead.
 bash Scripts/PublicData_download.sh rawData/ProjectA/GroupA srr_list.txt
 ```
 
-The script does three things.
+The script downloads the FASTQ files, compresses them, and **groups runs into a subfolder when
+several belong to one sample.**
 
-1. Fetches **metadata** from NCBI into `metadata.csv` — read length, layout, sample name, etc.
-2. Downloads the FASTQ files and compresses them
-3. **Groups runs into a subfolder when several belong to one sample**
+That last part matters. A single GEO sample (GSM) is often split into several SRA runs (SRR).
+Treating each run as its own sample **inflates your sample count and halves the apparent
+expression.** To get this right the script fetches SRA runinfo into `.runinfo.csv` and reads
+the `SampleName` column; later steps then merge those runs automatically. That file is
+machinery, not your metadata — ignore it.
 
-Point 3 matters. A single GEO sample (GSM) is often split into several SRA runs (SRR). Treating
-each run as its own sample **inflates your sample count and halves the apparent expression.**
-The script reads `SampleName`, puts runs from the same sample into one folder, and later steps
-merge them automatically.
+**It does not download a sample sheet, and that is deliberate.** The conditions you actually
+need — tissue, treatment, donor, cell type — are not in runinfo at all. When the download
+finishes the script prints a Run Selector link for the study and asks you to save the metadata
+sheet yourself:
+
+```
+rawData/<project>/<group>/SraRunTable.csv
+```
+
+Nothing in the pipeline reads that file. You read it, to know which count-matrix column is
+which condition. Checking that the dataset is genuinely bulk RNA-seq — not single-cell, not
+3'-tag — is part of the same look, and it is on you: the pipeline will happily process 10x
+reads and hand you meaningless numbers.
 
 ### Option B. Your own data
 

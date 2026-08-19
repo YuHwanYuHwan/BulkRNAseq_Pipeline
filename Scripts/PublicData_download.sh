@@ -1,7 +1,8 @@
 #!/bin/bash
 # PublicData_download.sh <group_dir> <SRR ...>
-#   Downloads FASTQ plus runinfo metadata for a list of SRR accessions into the group folder.
+#   Downloads raw FASTQ for a list of SRR accessions into the group folder.
 #   Runs sharing a SampleName go into a subfolder, which marks them as one sample to merge.
+#   The sample metadata sheet is NOT downloaded - see the closing message.
 #
 #   bash PublicData_download.sh rawData/ProjectA/GroupA SRR0000001 SRR0000002
 #   bash PublicData_download.sh rawData/ProjectA/GroupA srr_list.txt
@@ -21,15 +22,18 @@ fi
 [ ${#ACCS[@]} -gt 0 ] || { echo "[ERROR] no SRR accession given"; exit 1; }
 
 mkdir -p "$GROUP_DIR"
-META="${GROUP_DIR}/metadata.csv"
+# runinfo is machinery, not the user's metadata: it exists only to group runs by sample.
+# The conditions (tissue, treatment, donor) are not in it - the user fetches those separately.
+META="${GROUP_DIR}/.runinfo.csv"
 
-# -- 1. metadata ------------------------------------------------------------
+# -- 1. runinfo -------------------------------------------------------------
 curl -sf "${RUNINFO_URL}${ACCS[0]}" > "$META"
 for acc in "${ACCS[@]:1}"; do
     curl -sf "${RUNINFO_URL}${acc}" | tail -n +2 >> "$META"
 done
 [ -s "$META" ] || { echo "[ERROR] runinfo lookup failed"; exit 1; }
-echo "[META] $META  ($(( $(wc -l < "$META") - 1 )) runs)"
+echo "[INFO] runinfo: $(( $(wc -l < "$META") - 1 )) runs"
+SRP=$(awk -F, 'NR==1 { for (i=1;i<=NF;i++) if ($i=="SRAStudy") c=i; next } c { print $c; exit }' "$META")
 
 # ── 2. acc -> SampleName map, one pass. Samples with >1 run go into a subfolder.
 declare -A SAMPLE_OF MULTI count
@@ -60,5 +64,23 @@ for acc in "${ACCS[@]}"; do
     touch "${dest}/.${acc}.done"
 done
 
-echo "[DONE] ${#ACCS[@]} runs -> $GROUP_DIR"
-echo "       next: set species in group.conf, then run run_stage1.sh"
+cat <<MSG
+
+[DONE] ${#ACCS[@]} runs -> $GROUP_DIR
+
+  Next steps:
+
+  1. Download the metadata sheet and save it as
+         ${GROUP_DIR}/SraRunTable.csv
+     SRA Run Selector: https://www.ncbi.nlm.nih.gov/Traces/study/?acc=${SRP:-<study>}
+     (select all runs -> Metadata -> download)
+     It carries what the download cannot know: tissue, treatment, donor, cell type.
+     The pipeline does not read it. You do, to tell the sample columns apart.
+
+  2. Write ${GROUP_DIR}/group.conf
+
+         species      = Homo_sapiens     # must match a folder in reference_Genomes/
+         strandedness =                  # leave empty, stage 1 tells you what to put here
+
+  3. bash Scripts/run_stage1.sh ${GROUP_DIR}
+MSG
