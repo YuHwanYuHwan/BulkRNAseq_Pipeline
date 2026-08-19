@@ -9,6 +9,10 @@
 set -euo pipefail
 
 RUNINFO_URL="https://trace.ncbi.nlm.nih.gov/Traces/sra-db-be/runinfo?acc="
+THREADS="${THREADS:-8}"
+# gzip is single-threaded and dominates the wall clock on a multi-GB FASTQ. pigz writes the
+# same format on N cores; plain gzip stays the fallback.
+command -v pigz >/dev/null 2>&1 && ZIP="pigz -p $THREADS" || ZIP="gzip"
 
 [ $# -ge 2 ] || { sed -n '2,7p' "$0"; exit 1; }
 
@@ -58,9 +62,9 @@ for acc in "${ACCS[@]}"; do
     fi
     echo "[GET ] $acc -> $dest"
     prefetch --output-directory "$dest" "$acc" >/dev/null
-    fasterq-dump --split-3 --outdir "$dest" "${dest}/${acc}" >/dev/null
+    fasterq-dump --split-3 --threads "$THREADS" --outdir "$dest" "${dest}/${acc}" >/dev/null
     rm -rf "${dest:?}/${acc}"
-    gzip -f "${dest}"/${acc}*.fastq
+    $ZIP -f "${dest}"/${acc}*.fastq
     touch "${dest}/.${acc}.done"
 done
 

@@ -93,6 +93,7 @@ This creates a conda environment named `rnaseq-preproc` containing:
 | Tool | Purpose |
 |---|---|
 | `sra-tools` | Download FASTQ from public databases (NCBI SRA) |
+| `pigz` | Parallel gzip - compresses the downloaded FASTQ on all cores |
 | `FastQC` | Read quality check |
 | `cutadapt` | Adapter removal |
 | `STAR` | Genome alignment and index building |
@@ -104,7 +105,7 @@ To do it by hand instead:
 
 ```bash
 conda create -n rnaseq-preproc -c conda-forge -c bioconda \
-    sra-tools fastqc cutadapt star htseq multiqc bioconductor-edger
+    sra-tools fastqc cutadapt star htseq multiqc bioconductor-edger pigz
 conda activate rnaseq-preproc
 ```
 

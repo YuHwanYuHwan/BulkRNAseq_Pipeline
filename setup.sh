@@ -38,7 +38,7 @@ if [ -n "${CONDA_ENV:-}" ] && ! conda env list 2>/dev/null | grep -qE "^${CONDA_
         echo "  creating '$CONDA_ENV' ..."
         # Channel order matters: bioconda requires conda-forge to take priority.
         conda create -y -n "$CONDA_ENV" -c conda-forge -c bioconda \
-            sra-tools fastqc cutadapt star htseq multiqc bioconductor-edger
+            sra-tools fastqc cutadapt star htseq multiqc bioconductor-edger pigz
     else
         miss "conda env '$CONDA_ENV' not found - rerun with --create-env"
     fi
