@@ -1,6 +1,6 @@
 #!/bin/bash
 # FastQC.sh <group_dir>
-#   group 폴더의 raw FASTQ 전부에 FastQC 실행 → Processed/<project>/<group>/Fastqc_result/
+#   FastQC on every raw FASTQ in the group -> Processed/<project>/<group>/Fastqc_result/
 set -euo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/lib/common.sh"
 

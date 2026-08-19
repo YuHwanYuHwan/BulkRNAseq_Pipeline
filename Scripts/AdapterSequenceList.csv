@@ -1,6 +1,6 @@
-# kit 별 어댑터 서열. 새 kit 을 만나면 여기 한 줄 추가하면 이후 모든 데이터에 재사용된다.
-# adapter_R2 는 paired-end 일 때만 쓰인다 (single-end 면 무시).
-# strandedness 는 여기 두지 않는다 — kit 이름이 예측하지 못한다. probe_strandedness.sh 로 결정.
+# Adapter sequences per library prep kit. Add one row for a new kit and every later dataset reuses it.
+# adapter_R2 is used for paired-end data only (ignored for single-end).
+# Strandedness does NOT belong here - the kit name does not predict it. Decide it with probe_strandedness.sh.
 kit,adapter_R1,adapter_R2
 Illumina_universal,AGATCGGAAGAGCACACGTCT,AGATCGGAAGAGCGTCGTGTA
 Illumina_TruSeq,AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC,AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGTAGATCTCGGTGGTCGCCGTATCATT

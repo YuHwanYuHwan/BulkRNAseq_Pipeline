@@ -1,7 +1,7 @@
 #!/bin/bash
 # Trimming.sh <group_dir>
-#   cutadapt 로 어댑터 제거 → Processed/<project>/<group>/AdapterTrimming_result/
-#   어댑터는 group.conf 의 adapter_kit 으로 AdapterSequenceList.csv 에서 조회한다.
+#   Adapter removal with cutadapt -> Processed/<project>/<group>/AdapterTrimming_result/
+#   The adapter is looked up in AdapterSequenceList.csv by the adapter_kit set in group.conf.
 set -euo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/lib/common.sh"
 
@@ -17,8 +17,8 @@ echo "[KIT ] $KIT  R1=$A1  R2=${A2:-(none)}"
 OUT="${PROC_DIR}/AdapterTrimming_result"
 mkdir -p "$OUT"
 
-# run 이 여러 개면 cat 으로 합친다 (gzip 은 이어붙여도 유효한 스트림)
-merge_runs() {   # $1=콤마목록 $2=출력경로 → 실제 사용할 파일 경로를 stdout 으로
+# Several runs are concatenated (concatenated gzip streams stay valid gzip)
+merge_runs() {   # $1=comma list  $2=output path  -> prints the path to actually use
     local list="$1" out="$2"
     if [[ "$list" == *,* ]]; then
         [ -s "$out" ] || cat ${list//,/ } > "$out"
