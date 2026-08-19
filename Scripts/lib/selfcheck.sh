@@ -1,0 +1,105 @@
+#!/bin/bash
+# selfcheck.sh - logic self-check. Runs with no bioinformatics tool installed, so a fresh
+# clone can be verified before spending hours on a real dataset. Called by setup.sh.
+set -uo pipefail
+
+TMP=$(mktemp -d); trap 'rm -rf "$TMP"' EXIT
+ROOT="$TMP/repo"; mkdir -p "$ROOT/Scripts/lib"
+cp "$(dirname "${BASH_SOURCE[0]}")/common.sh" "$ROOT/Scripts/lib/"
+source "$ROOT/Scripts/lib/common.sh"          # PIPELINE_ROOT now points at the fake repo
+
+# Flat file = one sample, subdirectory = one sample whose runs are merged.
+t_list_samples() {
+    local G="$ROOT/rawData/P/g1"; mkdir -p "$G/GSM_B"
+    touch "$G/SRR001_1.fastq.gz" "$G/SRR001_2.fastq.gz" "$G/SRR009.fastq.gz" \
+          "$G/GSM_B/SRR002_1.fastq.gz" "$G/GSM_B/SRR002_2.fastq.gz" \
+          "$G/GSM_B/SRR003_1.fastq.gz" "$G/GSM_B/SRR003_2.fastq.gz"
+    init_group "$G"
+    local out; out=$(list_samples | sort)
+    [ "$(grep -c . <<< "$out")" -eq 3 ]                                  || { echo "sample count $(grep -c . <<< "$out") != 3"; return 1; }
+    grep '^GSM_B' <<< "$out" | grep -q 'SRR002_1.*,.*SRR003_1'           || { echo "GSM_B runs not merged"; return 1; }
+    grep '^SRR001' <<< "$out" | grep -q 'SRR001_2.fastq.gz'              || { echo "SRR001 R2 not paired"; return 1; }
+    grep '^SRR009' <<< "$out" | awk -F'\t' '$3==""' | grep -q .          || { echo "SRR009 not single-end"; return 1; }
+    [ "$PROC_DIR" = "$ROOT/Processed/P/g1" ]                             || { echo "PROC_DIR=$PROC_DIR"; return 1; }
+}
+
+# group.conf is hand-written: spaces around '=', quotes, comments and blanks must all parse.
+t_groupconf() {
+    local G="$ROOT/rawData/P/g2"; mkdir -p "$G"
+    cat > "$G/group.conf" <<'CONF'
+# comment line
+species       = Homo_sapiens
+adapter_kit="Illumina_TruSeq"      # trailing comment
+strandedness  =
+
+CONF
+    init_group "$G"
+    [ "${species:-}"     = "Homo_sapiens"    ] || { echo "species='${species:-}'"; return 1; }
+    [ "${adapter_kit:-}" = "Illumina_TruSeq" ] || { echo "adapter_kit='${adapter_kit:-}'"; return 1; }
+    [ -z "${strandedness:-}" ]                 || { echo "strandedness should be empty"; return 1; }
+}
+
+# Trimming makes read length variable - the MAX must win, not the first read or the mean.
+t_overhang() {
+    local FQ="$TMP/t.fastq" L LZ
+    { printf '@r1\n%s\n+\n%s\n' "$(printf 'A%.0s' {1..100})" "$(printf 'I%.0s' {1..100})"
+      printf '@r2\n%s\n+\n%s\n' "$(printf 'A%.0s' {1..150})" "$(printf 'I%.0s' {1..150})"
+      printf '@r3\n%s\n+\n%s\n' "$(printf 'A%.0s' {1..75})"  "$(printf 'I%.0s' {1..75})"; } > "$FQ"
+    gzip -cf "$FQ" > "$FQ.gz"
+    L=$(max_read_length "$FQ"); LZ=$(max_read_length "$FQ.gz")
+    [ "$L" -eq 150 ] && [ "$LZ" -eq 150 ] || { echo "max_read_length plain=$L gz=$LZ (expected 150)"; return 1; }
+}
+
+# runinfo SampleName decides which runs share a merge folder.
+t_grouping() {
+    local META="$TMP/metadata.csv" acc smp n
+    printf 'Run,LibraryLayout,SampleName\nSRR001,PAIRED,GSM_A\nSRR002,PAIRED,GSM_B\nSRR003,PAIRED,GSM_B\n' > "$META"
+    local -A SAMPLE_OF MULTI count
+    while IFS=$'\t' read -r acc smp; do
+        SAMPLE_OF[$acc]="$smp"
+        n=$(( ${count[$smp]:-0} + 1 )); count[$smp]=$n
+        [ "$n" -gt 1 ] && MULTI[$smp]=1
+    done < <(awk -F, 'NR==1 { for (i=1;i<=NF;i++) if ($i=="SampleName") c=i; next }
+                      c { print $1 "\t" $c }' "$META")
+    [ "${SAMPLE_OF[SRR003]:-}" = "GSM_B" ] || { echo "SRR003 -> ${SAMPLE_OF[SRR003]:-}"; return 1; }
+    [ -n "${MULTI[GSM_B]:-}" ]             || { echo "GSM_B not flagged multi-run"; return 1; }
+    [ -z "${MULTI[GSM_A]:-}" ]             || { echo "GSM_A wrongly flagged multi-run"; return 1; }
+}
+
+# A trailing tab in the header makes R read.table() add a column and go character.
+t_matrix() {
+    local OUT="$TMP/counts" MATRIX="$TMP/m.tsv" CMD s; mkdir -p "$OUT"
+    local SAMPLES=(S1 S2)
+    printf 'G1\t10\nG2\t20\n__no_feature\t5\n' > "$OUT/S1.gene.counts"
+    printf 'G1\t30\nG2\t40\n__no_feature\t7\n' > "$OUT/S2.gene.counts"
+    { printf 'Gene'; printf '\t%s' "${SAMPLES[@]}"; printf '\n'; } > "$MATRIX"
+    CMD="paste <(grep -v '^__' ${OUT}/${SAMPLES[0]}.gene.counts | cut -f1)"
+    for s in "${SAMPLES[@]}"; do CMD="$CMD <(grep -v '^__' ${OUT}/${s}.gene.counts | cut -f2)"; done
+    eval "$CMD" >> "$MATRIX"
+    [ "$(head -1 "$MATRIX")" = "$(printf 'Gene\tS1\tS2')" ] || { echo "header: $(head -1 "$MATRIX")"; return 1; }
+    grep -q '__no_feature' "$MATRIX"                        && { echo "__ row leaked into matrix"; return 1; }
+    [ "$(sed -n '2p' "$MATRIX")" = "$(printf 'G1\t10\t30')" ] || { echo "row G1 misaligned"; return 1; }
+}
+
+# __no_feature fraction -> library type. Same thresholds as probe_strandedness.sh.
+t_probe_verdict() {
+    local v
+    verdict() {
+        printf 'GENE1\t%d\n__no_feature\t%d\n__ambiguous\t0\n' "$((1000-$1))" "$1" > "$TMP/c"
+        awk -F'\t' '/^__/ { s[$1]=$2; t+=$2; next } { t+=$2 }
+            END { r=100*(s["__no_feature"]+0)/t
+                  if (r<35) print "reverse"; else if (r<65) print "no"; else print "yes" }' "$TMP/c"
+    }
+    for v in "150 reverse" "500 no" "850 yes"; do
+        set -- $v
+        [ "$(verdict "$1")" = "$2" ] || { echo "$(($1/10))% -> $(verdict "$1") (expected $2)"; return 1; }
+    done
+}
+
+PASS=0; FAIL=0
+for t in t_list_samples t_groupconf t_overhang t_grouping t_matrix t_probe_verdict; do
+    if msg=$("$t" 2>&1); then PASS=$((PASS+1))
+    else FAIL=$((FAIL+1)); printf '%s: %s\n' "${t#t_}" "${msg:-failed}" >&2; fi
+done
+[ "$FAIL" = 0 ] || exit 1
+echo "$PASS/$PASS"

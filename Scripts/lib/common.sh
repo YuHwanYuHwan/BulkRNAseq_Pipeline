@@ -52,10 +52,12 @@ list_samples() {
         stem="$(basename "$f")"; stem="${stem%%.*}"
         case "$stem" in
             *_2) continue ;;                  # R2 is handled together with its R1
-            *_1) s="${stem%_1}" ;;
-            *)   s="$stem" ;;
+            # Only a _1 stem can have a mate. Without this branch the substitution below is a
+            # no-op and ls returns the file itself, pairing a single-end read with itself.
+            *_1) printf '%s\t%s\t%s\n' "${stem%_1}" "$f" "$(ls "${f/_1./_2.}" 2>/dev/null || true)"
+                 continue ;;
         esac
-        printf '%s\t%s\t%s\n' "$s" "$f" "$(ls "${f/_1./_2.}" 2>/dev/null || true)"
+        printf '%s\t%s\t\n' "$stem" "$f"
     done
 }
 

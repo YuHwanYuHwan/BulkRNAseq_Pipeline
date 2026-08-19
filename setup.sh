@@ -78,9 +78,7 @@ AVAIL=$(df -BG --output=avail . 2>/dev/null | tail -1 | tr -dc '0-9')
     || warn "${AVAIL}G free - a STAR index alone needs ~30G"; }
 
 echo "== self-check =="
-for f in Scripts/tests/*.sh; do
-    bash "$f" >/dev/null 2>&1 && ok "$(basename "$f")" || miss "$(basename "$f")"
-done
+if out=$(bash Scripts/lib/selfcheck.sh 2>&1); then ok "logic $out"; else miss "logic - $out"; fi
 
 echo
 if [ "$FAIL" = 0 ]; then

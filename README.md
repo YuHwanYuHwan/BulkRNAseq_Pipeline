@@ -161,7 +161,7 @@ MyNewKit,AGATCGGAAGAGCACACGTCT,AGATCGGAAGAGCGTCGTGTA
 
 ```bash
 bash setup.sh                      # 환경 전체 (self-check 포함)
-for f in Scripts/tests/*.sh; do bash "$f"; done   # 로직만
+bash Scripts/lib/selfcheck.sh      # 로직만
 ```
 
 샘플 스캔·merge 그룹핑·overhang 산출·matrix 조립·probe 판정 로직을 검증한다.
