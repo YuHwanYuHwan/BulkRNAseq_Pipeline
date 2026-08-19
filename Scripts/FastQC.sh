@@ -17,7 +17,7 @@ while IFS=$'\t' read -r sample r1 r2; do
         continue
     fi
     echo "[FQC ] $sample"
-    "$FASTQC_BIN" --outdir "$OUT" ${r1//,/ } ${r2//,/ }
+    "$FASTQC_BIN" --threads "$THREADS" --outdir "$OUT" ${r1//,/ } ${r2//,/ }
     mark_done "$OUT" "$sample"
     n=$((n+1))
 done < <(list_samples)

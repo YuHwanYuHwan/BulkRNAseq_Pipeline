@@ -13,6 +13,11 @@ if [ -n "${CONDA_ENV:-}" ] && ! command -v fastqc >/dev/null 2>&1 && command -v 
 fi
 FASTQC_BIN="${FASTQC_BIN:-fastqc}"
 
+# Cores. Inside a SLURM job SLURM_CPUS_PER_TASK is what was actually reserved; outside one,
+# nproc reports the CPUs this process may use. A fixed default would either waste a big
+# compute node or oversubscribe a shared login node.
+THREADS="${THREADS:-${SLURM_CPUS_PER_TASK:-$(nproc)}}"
+
 # group dir -> project/group relative path. Processed/ and Output/ mirror the same layout.
 init_group() {
     GROUP_DIR="$(cd "$1" && pwd)"

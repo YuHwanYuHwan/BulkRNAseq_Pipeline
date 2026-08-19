@@ -37,7 +37,7 @@ STAR --runMode genomeGenerate \
     --genomeFastaFiles "$FA" \
     --sjdbGTFfile "$GTF" \
     --sjdbOverhang "$OVERHANG" \
-    --runThreadN "${THREADS:-8}"
+    --runThreadN "$THREADS"
 
 [ -f "${IDX_DIR}/SAindex" ] || { echo "[ERROR] index build failed" >&2; rm -rf "$IDX_DIR"; exit 1; }
 

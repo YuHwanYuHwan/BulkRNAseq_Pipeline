@@ -35,9 +35,9 @@ while IFS=$'	' read -r sample r1 r2; do
     in1=$(merge_runs "$r1" "${OUT}/${sample}_1.merged.fastq.gz")
     if [ -n "$r2" ]; then
         in2=$(merge_runs "$r2" "${OUT}/${sample}_2.merged.fastq.gz")
-        cutadapt -a "$A1" -A "$A2" --pair-filter=any --minimum-length 20             -o "${OUT}/${sample}_1_trimmed.fastq.gz" -p "${OUT}/${sample}_2_trimmed.fastq.gz"             "$in1" "$in2" > "${OUT}/${sample}.cutadapt.log"
+        cutadapt -j "$THREADS" -a "$A1" -A "$A2" --pair-filter=any --minimum-length 20             -o "${OUT}/${sample}_1_trimmed.fastq.gz" -p "${OUT}/${sample}_2_trimmed.fastq.gz"             "$in1" "$in2" > "${OUT}/${sample}.cutadapt.log"
     else
-        cutadapt -a "$A1" --minimum-length 20             -o "${OUT}/${sample}_trimmed.fastq.gz"             "$in1" > "${OUT}/${sample}.cutadapt.log"
+        cutadapt -j "$THREADS" -a "$A1" --minimum-length 20             -o "${OUT}/${sample}_trimmed.fastq.gz"             "$in1" > "${OUT}/${sample}.cutadapt.log"
     fi
     rm -f "${OUT}/${sample}"_[12].merged.fastq.gz
     mark_done "$OUT" "$sample"

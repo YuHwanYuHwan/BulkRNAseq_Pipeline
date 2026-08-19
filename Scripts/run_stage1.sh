@@ -4,8 +4,8 @@
 #   Stops at the probe: you decide the strandedness, then run stage 2.
 #   Works both as `bash run_stage1.sh <dir>` and `sbatch run_stage1.sh <dir>`.
 #SBATCH --job-name=rnaseq_s1
-#SBATCH --cpus-per-task=16
-#SBATCH --mem=64G
+#SBATCH --cpus-per-task=32
+#SBATCH --mem=96G
 #SBATCH --output=logs/stage1_%j.out
 set -euo pipefail
 S="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

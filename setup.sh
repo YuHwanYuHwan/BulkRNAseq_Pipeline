@@ -25,7 +25,8 @@ else
 # activates it. Set it empty if the tools are already on PATH some other way.
 CONDA_ENV="rnaseq-preproc"
 
-# Cores used by STAR, index building, and download compression. Default 8.
+# Cores used by STAR, index building, trimming, and download compression.
+# Unset means: whatever SLURM reserved for the job, or nproc outside a job.
 # THREADS=16
 
 # Only if fastqc is not on PATH (e.g. a manually downloaded copy)

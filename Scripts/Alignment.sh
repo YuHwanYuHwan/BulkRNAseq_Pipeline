@@ -53,7 +53,7 @@ while IFS=$'\t' read -r sample _ _; do
     STAR --genomeDir "$IDX" \
         --readFilesIn "$R1" ${R2:+"$R2"} \
         --readFilesCommand zcat \
-        --runThreadN "${THREADS:-8}" \
+        --runThreadN "$THREADS" \
         --outFilterMultimapNmax 10 \
         --outFilterMismatchNoverLmax 0.03 \
         --outSAMtype BAM SortedByCoordinate \
