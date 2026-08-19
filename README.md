@@ -229,11 +229,6 @@ treated samples belong in the same group; an unrelated experiment gets its own g
 
 All you need are run accessions.
 
-> **Run this on a login node, not through `sbatch`.** Compute nodes often have no outbound
-> network — on such a cluster `prefetch` hangs and then fails with an unhelpful timeout. This
-> is the one step in the pipeline that needs the internet; everything after it is offline work
-> and belongs in a job.
-
 ```bash
 bash Scripts/PublicData_download.sh rawData/ProjectA/GroupA SRR0000001 SRR0000002
 ```

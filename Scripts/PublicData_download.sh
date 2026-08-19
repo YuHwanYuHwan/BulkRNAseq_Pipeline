@@ -4,9 +4,6 @@
 #   Runs sharing a SampleName go into a subfolder, which marks them as one sample to merge.
 #   The sample metadata sheet is NOT downloaded - see the closing message.
 #
-#   Run this on a login/head node, never through sbatch. Compute nodes on many clusters
-#   have no outbound network, and prefetch fails there with a confusing timeout.
-#
 #   bash PublicData_download.sh rawData/ProjectA/GroupA SRR0000001 SRR0000002
 #   bash PublicData_download.sh rawData/ProjectA/GroupA srr_list.txt
 set -euo pipefail
