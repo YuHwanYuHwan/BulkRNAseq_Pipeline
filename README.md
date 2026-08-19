@@ -58,9 +58,22 @@ flowchart LR
 
 ### 2-1. 저장소 받기
 
+홈 디렉토리에 받습니다. 참조 게놈·중간물·결과가 전부 이 폴더 안에 쌓이므로,
+**용량 여유가 있는 곳**(수 TB)에 두어야 합니다.
+
 ```bash
+cd ~
 git clone https://github.com/YuHwanYuHwan/BulkRNAseq_Pipeline.git
 cd BulkRNAseq_Pipeline
+```
+
+```
+~/BulkRNAseq_Pipeline/
+  rawData/            원본 FASTQ (직접 넣거나 다운로드)
+  reference_Genomes/  게놈 FASTA·GTF·STAR 인덱스
+  Processed/          중간물 (trimmed FASTQ, BAM) — 지워도 됨
+  Output/             최종 결과 (count matrix, CPM, 리포트)
+  Scripts/            파이프라인 코드
 ```
 
 ### 2-2. 소프트웨어 설치
@@ -98,7 +111,8 @@ conda activate rnaseq-preproc
 read 를 어디에 붙일지 알려면 **게놈 서열(FASTA)** 과 **유전자 위치 정보(GTF)** 가 필요합니다.
 용량이 크고(수 GB) 사람마다 원하는 버전이 달라서, 이건 직접 받습니다.
 
-[Ensembl FTP](https://ftp.ensembl.org/pub/) 에서 받아 아래 구조로 둡니다.
+[Ensembl FTP](https://ftp.ensembl.org/pub/) 에서 받아, **저장소 안의** `reference_Genomes/` 에
+아래 구조로 둡니다. 경로를 따로 설정할 수 없고 여기 고정입니다.
 
 ```
 reference_Genomes/
@@ -166,9 +180,6 @@ Ready. Next: put FASTQ under rawData/<project>/<group>/ and write group.conf (sp
 ```bash
 # 도구가 들어 있는 conda 환경. 모든 스크립트가 이걸 자동으로 activate 합니다
 CONDA_ENV="rnaseq-preproc"
-
-# 랩에서 참조 게놈을 공유한다면 (인덱스 하나에 30GB 라 공유가 이득)
-REF_ROOT="/data/shared/reference_Genomes"
 
 # conda 대신 직접 받은 FastQC 를 쓴다면
 FASTQC_BIN="/home/user/FastQC/fastqc"

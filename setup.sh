@@ -25,9 +25,6 @@ else
 # activates it. Set it empty if the tools are already on PATH some other way.
 CONDA_ENV="rnaseq-preproc"
 
-# Shared reference root, so lab members reuse the same STAR indexes (~30GB each)
-# REF_ROOT="/data/shared/reference_Genomes"
-
 # Only if fastqc is not on PATH (e.g. a manually downloaded copy)
 # FASTQC_BIN="/home/user/FastQC/fastqc"
 CFG
@@ -58,7 +55,7 @@ done
 Rscript -e 'quit(status = !requireNamespace("edgeR", quietly=TRUE))' 2>/dev/null && ok "R edgeR" || miss "R package edgeR"
 
 echo "== reference genomes =="
-REF_ROOT="${REF_ROOT:-reference_Genomes}"
+REF_ROOT=reference_Genomes
 shopt -s nullglob
 found=0
 for d in "$REF_ROOT"/*/; do

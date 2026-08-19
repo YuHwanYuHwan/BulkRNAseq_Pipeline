@@ -5,7 +5,7 @@
 
 PIPELINE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 [ -f "${PIPELINE_ROOT}/config.sh" ] && source "${PIPELINE_ROOT}/config.sh"
-REF_ROOT="${REF_ROOT:-${PIPELINE_ROOT}/reference_Genomes}"
+REF_ROOT="${PIPELINE_ROOT}/reference_Genomes"
 
 # Tool paths: use PATH if available, else *_BIN from config.sh
 if [ -n "${CONDA_ENV:-}" ] && ! command -v fastqc >/dev/null 2>&1 && command -v conda >/dev/null 2>&1; then
