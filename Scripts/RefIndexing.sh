@@ -32,7 +32,7 @@ mkdir -p "$IDX_DIR"
 echo "[IDX ] building $SPECIES overhang=$OVERHANG"
 echo "       FASTA $(basename "$FA")"
 echo "       GTF   $(basename "$GTF")"
-"$STAR_BIN" --runMode genomeGenerate \
+STAR --runMode genomeGenerate \
     --genomeDir "$IDX_DIR" \
     --genomeFastaFiles "$FA" \
     --sjdbGTFfile "$GTF" \

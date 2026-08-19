@@ -50,7 +50,7 @@ while IFS=$'\t' read -r sample _ _; do
     [ -e "$R2" ] || R2=""
 
     echo "[STAR] $sample"
-    "$STAR_BIN" --genomeDir "$IDX" \
+    STAR --genomeDir "$IDX" \
         --readFilesIn "$R1" ${R2:+"$R2"} \
         --readFilesCommand zcat \
         --runThreadN "${THREADS:-8}" \
