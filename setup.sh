@@ -46,11 +46,14 @@ if [ -n "${CONDA_ENV:-}" ] && ! conda env list 2>/dev/null | grep -qE "^${CONDA_
         miss "conda env '$CONDA_ENV' not found - rerun with --create-env"
     fi
 fi
-[ -n "${CONDA_ENV:-}" ] && { source "$(conda info --base)/etc/profile.d/conda.sh" 2>/dev/null && conda activate "$CONDA_ENV"; } || true
+if [ -n "${CONDA_ENV:-}" ]; then
+    source "$(conda info --base)/etc/profile.d/conda.sh" 2>/dev/null && conda activate "$CONDA_ENV"
+fi
 
 echo "== tools =="
 for t in prefetch fasterq-dump cutadapt STAR htseq-count multiqc Rscript "${FASTQC_BIN:-fastqc}"; do
-    command -v "$t" >/dev/null 2>&1 && ok "$(basename "$t")"         || miss "$(basename "$t")$([ "$t" = "${FASTQC_BIN:-fastqc}" ] && echo '  (set FASTQC_BIN in config.sh)')"
+    command -v "$t" >/dev/null 2>&1 && ok "$(basename "$t")" \
+        || miss "$(basename "$t")$([ "$t" = "${FASTQC_BIN:-fastqc}" ] && echo '  (set FASTQC_BIN in config.sh)')"
 done
 Rscript -e 'quit(status = !requireNamespace("edgeR", quietly=TRUE))' 2>/dev/null && ok "R edgeR" || miss "R package edgeR"
 
@@ -59,7 +62,7 @@ REF_ROOT="${REF_ROOT:-reference_Genomes}"
 shopt -s nullglob
 found=0
 for d in "$REF_ROOT"/*/; do
-    sp="$(basename "$d")"; [ "$sp" = "index" ] && continue
+    sp="$(basename "$d")"
     fa=("$d"*.dna.*.fa); gtf=("$d"*.gtf)
     if [ ${#fa[@]} -gt 0 ] && [ ${#gtf[@]} -gt 0 ]; then
         ok "$sp  ($(basename "${gtf[0]}"))"; found=1
