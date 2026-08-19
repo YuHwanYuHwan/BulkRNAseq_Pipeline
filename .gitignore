@@ -1,0 +1,11 @@
+config.sh
+rawData/*
+!rawData/.gitkeep
+Processed/*
+!Processed/.gitkeep
+Output/*
+!Output/.gitkeep
+reference_Genomes/*
+!reference_Genomes/.gitkeep
+logs/*
+!logs/.gitkeep

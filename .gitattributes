@@ -1,0 +1,6 @@
+# Shell scripts must stay LF - a CRLF shebang breaks with "bad interpreter: /bin/bash^M"
+# on the Linux server. This normalizes everything to LF in the repo and on checkout.
+* text=auto eol=lf
+*.png binary
+*.pdf binary
+*.gz binary
