@@ -21,8 +21,19 @@ init_group() {
     PROC_DIR="${PIPELINE_ROOT}/Processed/${REL}"
     OUT_DIR="${PIPELINE_ROOT}/Output/${REL}"
     GROUP="$(basename "$REL")"
+    # group.conf is written by hand, so tolerate spaces around '=' and quotes.
+    # Sourcing it directly would fail on "species = Homo_sapiens".
     CONF="${GROUP_DIR}/group.conf"
-    [ -f "$CONF" ] && source "$CONF"
+    if [ -f "$CONF" ]; then
+        while IFS= read -r line; do
+            line="${line%%#*}"
+            [[ "$line" == *=* ]] || continue
+            local k="${line%%=*}" v="${line#*=}"
+            k="$(echo "$k" | tr -d '[:space:]')"
+            v="$(echo "$v" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//; s/^"\(.*\)"$/\1/; s/^'"'"'\(.*\)'"'"'$/\1/')"
+            [ -n "$k" ] && printf -v "$k" '%s' "$v"
+        done < "$CONF"
+    fi
     mkdir -p "$PROC_DIR" "$OUT_DIR"
 }
 
