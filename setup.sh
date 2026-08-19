@@ -19,17 +19,17 @@ if [ -f config.sh ]; then ok "config.sh"
 else
     # Template lives here, not in a separate .example file - one place to keep in sync.
     cat > config.sh <<'CFG'
-# config.sh - per-machine settings. Gitignored. Leave everything commented out if all
-# tools are on PATH and the reference genomes live under reference_Genomes/.
+# config.sh - per-machine settings. Gitignored.
+
+# Conda environment holding the tools. `setup.sh --create-env` creates it, every script
+# activates it. Set it empty if the tools are already on PATH some other way.
+CONDA_ENV="rnaseq-preproc"
 
 # Shared reference root, so lab members reuse the same STAR indexes (~30GB each)
 # REF_ROOT="/data/shared/reference_Genomes"
 
 # Only if fastqc is not on PATH (e.g. a manually downloaded copy)
 # FASTQC_BIN="/home/user/FastQC/fastqc"
-
-# Conda environment to activate automatically
-# CONDA_ENV="bulkrnaseq"
 CFG
     ok "config.sh created - edit it if tools are not on PATH"
 fi
@@ -46,7 +46,7 @@ if [ -n "${CONDA_ENV:-}" ] && ! conda env list 2>/dev/null | grep -qE "^${CONDA_
         miss "conda env '$CONDA_ENV' not found - rerun with --create-env"
     fi
 fi
-if [ -n "${CONDA_ENV:-}" ]; then
+if [ -n "${CONDA_ENV:-}" ] && command -v conda >/dev/null 2>&1; then
     source "$(conda info --base)/etc/profile.d/conda.sh" 2>/dev/null && conda activate "$CONDA_ENV"
 fi
 

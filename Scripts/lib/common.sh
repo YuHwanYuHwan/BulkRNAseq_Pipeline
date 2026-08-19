@@ -8,7 +8,7 @@ PIPELINE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 REF_ROOT="${REF_ROOT:-${PIPELINE_ROOT}/reference_Genomes}"
 
 # Tool paths: use PATH if available, else *_BIN from config.sh
-if [ -n "${CONDA_ENV:-}" ] && ! command -v fastqc >/dev/null 2>&1; then
+if [ -n "${CONDA_ENV:-}" ] && ! command -v fastqc >/dev/null 2>&1 && command -v conda >/dev/null 2>&1; then
     source "$(conda info --base)/etc/profile.d/conda.sh" && conda activate "$CONDA_ENV"
 fi
 FASTQC_BIN="${FASTQC_BIN:-fastqc}"
