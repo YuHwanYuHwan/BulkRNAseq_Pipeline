@@ -26,9 +26,8 @@ bash setup.sh --create-env      # conda 환경 생성 + 전체 점검
 `setup.sh --create-env` 가 아래를 만든다. 수동으로 하려면:
 
 ```bash
-conda create -n bulkrnaseq -c bioconda -c conda-forge \
-    sra-tools fastqc cutadapt star htseq multiqc \
-    bioconductor-edger r-base
+conda create -n rnaseq-preproc -c conda-forge -c bioconda \
+    sra-tools fastqc cutadapt star htseq multiqc bioconductor-edger
 ```
 
 | 도구 | 용도 |
