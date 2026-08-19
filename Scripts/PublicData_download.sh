@@ -12,7 +12,7 @@ RUNINFO_URL="https://trace.ncbi.nlm.nih.gov/Traces/sra-db-be/runinfo?acc="
 # config.sh only, not common.sh: this step knows nothing about groups or references.
 CONFIG="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/config.sh"
 [ -f "$CONFIG" ] && source "$CONFIG"
-THREADS="${THREADS:-${SLURM_CPUS_PER_TASK:-$(nproc)}}"
+THREADS="${SLURM_CPUS_PER_TASK:-${THREADS:-$(nproc)}}"
 # gzip is single-threaded and dominates the wall clock on a multi-GB FASTQ. pigz writes the
 # same format on N cores; plain gzip stays the fallback.
 command -v pigz >/dev/null 2>&1 && ZIP="pigz -p $THREADS" || ZIP="gzip"

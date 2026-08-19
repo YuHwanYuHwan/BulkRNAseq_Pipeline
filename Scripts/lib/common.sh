@@ -13,10 +13,11 @@ if [ -n "${CONDA_ENV:-}" ] && ! command -v fastqc >/dev/null 2>&1 && command -v 
 fi
 FASTQC_BIN="${FASTQC_BIN:-fastqc}"
 
-# Cores. Inside a SLURM job SLURM_CPUS_PER_TASK is what was actually reserved; outside one,
-# nproc reports the CPUs this process may use. A fixed default would either waste a big
-# compute node or oversubscribe a shared login node.
-THREADS="${THREADS:-${SLURM_CPUS_PER_TASK:-$(nproc)}}"
+# Cores, most authoritative first. Inside a SLURM job the reservation wins over anything in
+# config.sh - asking for 32 cores and then using 8 wastes the other 24, and using more than
+# reserved fights the cgroup. Outside a job, config.sh wins, which is how you stay polite on a
+# shared head node; nproc is the last resort.
+THREADS="${SLURM_CPUS_PER_TASK:-${THREADS:-$(nproc)}}"
 
 # group dir -> project/group relative path. Processed/ and Output/ mirror the same layout.
 init_group() {

@@ -192,16 +192,18 @@ needed.
 CONDA_ENV="rnaseq-preproc"
 
 # cores for STAR, index building, trimming, and download compression.
-# leave unset to follow the job's reservation
-THREADS=16
+# a SLURM reservation always wins over this
+THREADS=8
 
 # only if you use a manually downloaded FastQC instead of the conda one
 FASTQC_BIN="/home/user/FastQC/fastqc"
 ```
 
-Leaving `THREADS` unset is usually right: inside a SLURM job the scripts follow
-`SLURM_CPUS_PER_TASK`, and outside one they follow `nproc`. Set it explicitly only to hold
-back on a shared login node, or to override a reservation you cannot change.
+The order is: a SLURM reservation first, then `THREADS`, then `nproc`. Inside a job the
+reservation always wins — reserving 32 cores and then running on 8 wastes the other 24, so if
+you want fewer, reserve fewer. `THREADS` is for the case outside a job: on a shared head node,
+`nproc` would hand one run every core on the machine, and a second run would then compete with
+the first for them.
 
 If your tools are already installed some other way, set `CONDA_ENV=""`.
 

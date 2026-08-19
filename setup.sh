@@ -26,8 +26,8 @@ else
 CONDA_ENV="rnaseq-preproc"
 
 # Cores used by STAR, index building, trimming, and download compression.
-# Unset means: whatever SLURM reserved for the job, or nproc outside a job.
-# THREADS=16
+# A SLURM reservation always wins over this. Unset means nproc outside a job.
+# THREADS=8
 
 # Only if fastqc is not on PATH (e.g. a manually downloaded copy)
 # FASTQC_BIN="/home/user/FastQC/fastqc"
