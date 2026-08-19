@@ -191,9 +191,16 @@ needed.
 # conda environment holding the tools. Every script activates it automatically
 CONDA_ENV="rnaseq-preproc"
 
+# cores for STAR, index building, and download compression. Default 8
+THREADS=16
+
 # only if you use a manually downloaded FastQC instead of the conda one
 FASTQC_BIN="/home/user/FastQC/fastqc"
 ```
+
+`THREADS` is worth setting on a big node — it is the one knob that changes how long a run
+takes. Match it to what your SLURM job actually reserves (`--cpus-per-task`), not to the
+machine's core count.
 
 If your tools are already installed some other way, set `CONDA_ENV=""`.
 

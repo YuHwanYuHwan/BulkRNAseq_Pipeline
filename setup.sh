@@ -25,6 +25,9 @@ else
 # activates it. Set it empty if the tools are already on PATH some other way.
 CONDA_ENV="rnaseq-preproc"
 
+# Cores used by STAR, index building, and download compression. Default 8.
+# THREADS=16
+
 # Only if fastqc is not on PATH (e.g. a manually downloaded copy)
 # FASTQC_BIN="/home/user/FastQC/fastqc"
 CFG
