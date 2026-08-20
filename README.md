@@ -636,11 +636,11 @@ wrong value.
 [CNT ] Control_1
 ...
 [DONE] HTSeq 18 samples
-       matrix: .../Output/ProjectA/GroupA/GroupA_count_matrix.tsv  (62703 genes x 18 samples)
+       matrix: .../Output/ProjectA/GroupA/GroupA_count_matrix.tsv  (78932 genes x 18 samples)
 [2026-08-20 22:15:40] <== ReadCount  01:12:29
 
 [2026-08-20 22:15:40] ==> CalcCPM
-[CPM ] 62703 genes x 18 samples -> .../GroupA_CPM.tsv
+[CPM ] 78932 genes x 18 samples -> .../GroupA_CPM.tsv
 [2026-08-20 22:15:52] <== CalcCPM  00:00:12
 
 [2026-08-20 22:15:52] ==> MultiQC
@@ -653,7 +653,19 @@ strandedness is wrong — fix `group.conf`, delete the `.done` markers under
 `Processed/.../HTseqCount_result/`, and run stage 2 again.
 
 The gene count depends on the annotation, not on your data: every sample in a group is counted
-against the same GTF, so the matrix has the same number of rows whatever you sequenced.
+against the same GTF, so the matrix has the same number of rows whatever you sequenced. Ensembl
+release 113 for human gives 78,932 rows, every biotype included.
+
+`pipeline_report.txt` closes the run with the numbers worth checking:
+
+```
+[ QC summary ]
+  uniquely mapped   mean 93.7%  min 92.0%
+  __no_feature      mean 2.9%  max 3.3%
+```
+
+A low `__no_feature` is the confirmation that the strandedness call was right — the same
+library read 43.6% under the probe's `-s reverse` and 2.9% once counted as unstranded.
 
 ---
 
