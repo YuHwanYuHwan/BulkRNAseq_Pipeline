@@ -21,7 +21,7 @@ THREADS="${SLURM_CPUS_PER_TASK:-${THREADS:-$(nproc)}}"
 
 # Every step stamps its own start and end, so a stage log reads as a timeline and a slow step
 # is obvious without instrumenting anything. The EXIT trap fires on failure too.
-if [ -z "${SELFCHECK:-}" ]; then
+if [ -z "${NO_STEP_LOG:-}" ]; then
     STEP="$(basename "$0" .sh)"
     SECONDS=0
     printf '[%s] ==> %s\n' "$(date '+%F %T')" "$STEP"

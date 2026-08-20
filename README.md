@@ -7,14 +7,19 @@ Everything that comes *before* them is. Preprocessing is the same work in every 
 rather than rewriting it each time, every project uses this one repository.
 
 ```mermaid
-flowchart LR
-    A["FASTQ<br/>(sequencer output)"] --> B["FastQC<br/>quality check"]
-    B --> C["cutadapt<br/>adapter removal"]
-    C --> D["STAR<br/>align to genome"]
-    D --> E["HTSeq<br/>count reads per gene"]
-    E --> F["edgeR<br/>TMM/CPM normalization"]
-    F --> G["count matrix<br/>+ CPM table"]
+flowchart TB
+    A["FASTQ<br/><i>sequencer output</i>"] --> B["FastQC<br/><i>quality check</i>"]
+    B --> C["cutadapt<br/><i>adapter removal</i>"]
+    C --> D["STAR<br/><i>align to genome</i>"]
+    D --> E["HTSeq<br/><i>count reads per gene</i>"]
+    E --> F["edgeR<br/><i>TMM / CPM</i>"]
+    F --> G(["count matrix + CPM table"])
+    G -.-> H["differential expression, GO, GSEA<br/><i>your own analysis, not this repository</i>"]
+    style G fill:#e8f5e9,stroke:#2e7d32
+    style H fill:#f5f5f5,stroke:#9e9e9e,stroke-dasharray:4
 ```
+
+The green box is what this pipeline hands you. Everything after it is your analysis.
 
 ---
 
@@ -61,6 +66,31 @@ table explains what happens inside them.
 
 ## 2. Installation
 
+### 2-0. What you need first
+
+| | |
+|---|---|
+| **A Linux server with a shell** | Everything here runs from the command line |
+| **conda** | Miniconda or Anaconda, installed and on your `PATH`. `setup.sh` builds the tool environment with it but cannot install conda itself — see below |
+| **Disk** | Roughly 3–4× your raw FASTQ, plus ~30 GB per STAR index. A 40 GB dataset wants ~200 GB free |
+| **Memory** | 32 GB or more. Building a human STAR index needs that much on its own |
+| **Time** | Hours, not minutes. A first run on ~18 samples takes most of a day |
+
+If conda is missing, install Miniconda into your home directory — no admin rights needed:
+
+```bash
+wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+bash Miniconda3-latest-Linux-x86_64.sh      # accept the defaults
+exec $SHELL -l                              # reopen the shell so conda is on PATH
+conda --version
+```
+
+> **A job scheduler is the one thing you may not be able to add yourself.** SLURM is part of
+> how a machine is administered, so if your cluster does not already have it, installing it is
+> a system administrator's job. You do not need it: `bash` and `nohup` run the pipeline exactly
+> the same, and that is the normal way on a single server.
+> [Section 13](#13-running-on-slurm) covers the cluster case.
+
 ### 2-1. Get the repository
 
 Clone it into your home directory. Reference genomes, intermediates, and results all
@@ -84,13 +114,6 @@ cd BulkRNAseq_Pipeline
 ### 2-2. Install the software
 
 All tools go into a single conda environment.
-
-> **A job scheduler is the one thing this cannot install for you.** Everything below comes
-> from conda, but SLURM is part of how a machine is administered — if your cluster does not
-> already have it, adding it is a system administrator's job, not something you can do from
-> your account. You do not need it: `bash` and `nohup` run the pipeline perfectly well, and
-> that is the normal way on a single server. [Section 13](#13-running-on-slurm) covers the
-> cluster case.
 
 ```bash
 bash setup.sh --create-env
@@ -304,12 +327,12 @@ sheet silently produces wrong results the moment it disagrees with the files on 
 To check what the pipeline sees:
 
 ```bash
-source Scripts/lib/common.sh
-GROUP_DIR=$(pwd)/rawData/ProjectA/GroupA
-list_samples
+bash Scripts/list_samples.sh rawData/ProjectA/GroupA
 ```
 
-Output is `sample <TAB> R1 <TAB> R2`. What you see there is exactly what will be processed.
+Output is `sample <TAB> R1 <TAB> R2`. What you see there is exactly what will be processed — a
+sample missing from this list stays missing, so it is worth a look before starting a job that
+runs for hours.
 
 ---
 
@@ -497,6 +520,12 @@ Gene              Control_1  Control_2  Treated_1  Treated_2
 ENSG00000000003        1284       1301        997       1043
 ENSG00000000005           0          0          0          0
 ```
+
+From here the count matrix goes into whatever you use for differential expression — DESeq2 or
+edgeR in R are the usual choices, both of which take **raw counts**, not the CPM table. The CPM
+file is for plotting and clustering, where library size has to be out of the way. That analysis
+is deliberately not part of this repository: preprocessing is identical everywhere, while the
+comparison you run is specific to your question.
 
 **`pipeline_report.txt`** exists for the day you write the paper. It records the tool versions,
 parameters, and genome release, and includes a draft Methods paragraph — so that a year later
