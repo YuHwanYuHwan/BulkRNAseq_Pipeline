@@ -107,71 +107,74 @@ What the repository holds, and what appears as you use it:
 ```
 BulkRNAseq_Pipeline/
 │
-├── setup.sh                    environment check, and --create-env builds the conda env
-├── config.sh                   per-machine settings; setup.sh writes it, git ignores it
+├── setup.sh                    # environment check; --create-env builds the conda env
+├── config.sh                   # per-machine settings; setup.sh writes it, git ignores it
 ├── README.md
 │
-├── Scripts/
-│   ├── PublicData_download.sh  SRR accessions -> FASTQ in a group folder
-│   ├── list_samples.sh         print what the pipeline sees in a group
-│   ├── run_stage1.sh           FastQC -> Trimming -> Alignment -> probe
-│   ├── run_stage2.sh           ReadCount -> CalcCPM -> MultiQC
-│   ├── FastQC.sh
-│   ├── Trimming.sh
-│   ├── AdapterSequenceList.csv adapter sequences per library prep kit
-│   ├── RefIndexing.sh          builds a STAR index when one is missing
-│   ├── Alignment.sh
-│   ├── probe_strandedness.sh
-│   ├── ReadCount.sh
-│   ├── CalcCPM.sh / CalcCPM.R
-│   ├── MultiQC.sh
-│   └── lib/
-│       ├── common.sh           sample scanning, group.conf parsing, shared helpers
-│       └── selfcheck.sh        logic tests that run without any tool installed
-│
-├── rawData/                    ← YOU put data here
+├── rawData/                                # ← YOU put data here
 │   ├── ProjectA/
 │   │   ├── GroupA/
-│   │   │   ├── group.conf              ← YOU write this: species, kit, strandedness
-│   │   │   ├── Control_1_1.fastq.gz    flat files: filename = sample name
+│   │   │   ├── group.conf                  # ← YOU write this: species, kit, strandedness
+│   │   │   ├── Control_1_1.fastq.gz        # flat file: filename = sample name
 │   │   │   ├── Control_1_2.fastq.gz
 │   │   │   ├── Treated_1_1.fastq.gz
 │   │   │   └── Treated_1_2.fastq.gz
 │   │   └── GroupB/
 │   │       ├── group.conf
-│   │       └── Control_2/              a folder = one sample; runs inside are merged
+│   │       └── Control_2/                  # a folder = one sample; runs inside are merged
 │   │           ├── run_A_1.fastq.gz
 │   │           └── run_B_1.fastq.gz
 │   └── ProjectB/
 │
-├── reference_Genomes/          ← YOU download the genome; the pipeline builds the index
+├── reference_Genomes/                      # ← YOU download the genome; the pipeline indexes it
 │   ├── Homo_sapiens/
 │   │   ├── Homo_sapiens.GRCh38.dna.primary_assembly.fa
 │   │   ├── Homo_sapiens.GRCh38.113.gtf
 │   │   └── index/
-│   │       ├── overhang149/            one index per read length, kept forever
+│   │       ├── overhang149/                # one index per read length, kept forever
 │   │       └── overhang99/
 │   └── Mus_musculus/
 │       ├── Mus_musculus.GRCm39.dna.primary_assembly.fa
 │       ├── Mus_musculus.GRCm39.115.gtf
 │       └── index/overhang100/
 │
-├── Processed/                  intermediates, mirroring rawData. SAFE TO DELETE
+├── Processed/                              # intermediates, mirrors rawData. SAFE TO DELETE
 │   └── ProjectA/GroupA/
-│       ├── Fastqc_result/              per-sample FastQC html and zip
-│       ├── AdapterTrimming_result/     *_trimmed.fastq.gz and cutadapt logs
+│       ├── Fastqc_result/                  # per-sample FastQC html and zip
+│       ├── AdapterTrimming_result/         # *_trimmed.fastq.gz and cutadapt logs
 │       ├── Alignment_result/
-│       │   └── Control_1/              BAM and STAR Log.final.out per sample
-│       └── HTseqCount_result/          <sample>.gene.counts, one per sample
+│       │   └── Control_1/                  # BAM and STAR Log.final.out per sample
+│       └── HTseqCount_result/              # <sample>.gene.counts, one per sample
 │
-├── Output/                     final results, mirroring rawData. KEEP THIS
+├── Output/                                 # final results, mirrors rawData. KEEP THIS
 │   └── ProjectA/GroupA/
-│       ├── GroupA_count_matrix.tsv     raw counts, genes x samples
-│       ├── GroupA_CPM.tsv              TMM-normalized CPM
+│       ├── GroupA_count_matrix.tsv         # raw counts, genes x samples
+│       ├── GroupA_CPM.tsv                  # TMM-normalized CPM
 │       ├── GroupA_multiqc_report.html
-│       └── GroupA_pipeline_report.txt  versions, parameters, QC, Methods draft
+│       └── GroupA_pipeline_report.txt      # versions, parameters, QC, Methods draft
 │
-└── logs/                       SLURM job output
+├── logs/                                   # SLURM job output
+│
+└── Scripts/                                # in the order they run
+    ├── PublicData_download.sh              # SRR accessions -> FASTQ in a group folder
+    ├── list_samples.sh                     # print what the pipeline sees in a group
+    │
+    ├── run_stage1.sh                       # wrapper: the four steps below
+    ├── FastQC.sh                           #   1. read quality
+    ├── Trimming.sh                         #   2. adapter removal
+    ├── AdapterSequenceList.csv             #      adapter sequences per library prep kit
+    ├── RefIndexing.sh                      #   3a. builds a STAR index when one is missing
+    ├── Alignment.sh                        #   3b. alignment
+    ├── probe_strandedness.sh               #   4. one sample counted, for you to judge
+    │
+    ├── run_stage2.sh                       # wrapper: the three steps below
+    ├── ReadCount.sh                        #   5. HTSeq counts -> count matrix
+    ├── CalcCPM.sh / CalcCPM.R              #   6. TMM/CPM normalization
+    ├── MultiQC.sh                          #   7. QC report + pipeline report
+    │
+    └── lib/
+        ├── common.sh                       # sample scanning, group.conf parsing, helpers
+        └── selfcheck.sh                    # logic tests that run without any tool installed
 ```
 
 Three things you create, everything else is generated: the FASTQ under `rawData/`, the
