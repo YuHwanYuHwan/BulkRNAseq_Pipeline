@@ -26,15 +26,17 @@ echo "[PROBE] sample=$SAMPLE  -s reverse"
 TMP="${PROC_DIR}/.strand_probe.counts"
 htseq-count -r pos -s reverse "$BAM" "$GTF" > "$TMP"
 
-strand_report "$TMP"
+REPORT="$(strand_report "$TMP")"
 rm -f "$TMP"
+echo "$REPORT"
+VERDICT="$(awk '/likely strandedness/ { print $5 }' <<< "$REPORT")"
 
 cat <<MSG
 
-  Thresholds are heuristic. Borderline cases are yours to judge.
-  Write the value into ${GROUP_DIR}/group.conf :
+  Thresholds are heuristic. Borderline cases are yours to judge - the value below is a
+  reading of the numbers above, not a measurement. Change it if you read them differently.
 
-      strandedness = no | yes | reverse
+      sed -i 's/^strandedness.*/strandedness = ${VERDICT}/' ${GROUP_DIR}/group.conf
 
   Then run: bash Scripts/run_stage2.sh ${GROUP_DIR}
 MSG

@@ -528,14 +528,15 @@ run separates all three cases:
 | Middle (~50%) | **`no`** | Half the reads sit on the other strand — no strand information |
 | High (80%+) | **`yes`** | Almost nothing was assigned — the direction was assumed backwards |
 
-Write the answer into `group.conf`:
+The probe ends by printing the exact command to record your answer, with its own reading
+filled in — paste it, or edit the value first if you read the numbers differently:
 
-```bash
-sed -i 's/^strandedness.*/strandedness = reverse/' rawData/ProjectA/GroupA/group.conf
+```
+      sed -i 's/^strandedness.*/strandedness = no/' rawData/ProjectA/GroupA/group.conf
 ```
 
 > These thresholds are heuristics. If you land somewhere ambiguous, say 35%, probe another
-> sample. **The judgment is yours.**
+> sample. **The judgment is yours** — the pipeline offers a reading and writes nothing.
 
 ---
 
