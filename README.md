@@ -408,6 +408,49 @@ without timing anything yourself:
 
 A failed step is stamped too, with its exit code.
 
+### What a healthy run looks like
+
+```
+[2026-08-20 11:02:14] ==> FastQC
+[FQC ] Control_1
+[FQC ] Control_2
+...
+[DONE] FastQC 18 samples -> .../Processed/ProjectA/GroupA/Fastqc_result
+[2026-08-20 11:41:07] <== FastQC  00:38:53
+
+[2026-08-20 11:41:07] ==> Trimming
+[KIT ] Illumina_universal  R1=AGATCGGAAGAGCACACGTCT  R2=AGATCGGAAGAGCGTCGTGTA
+[TRIM] Control_1
+...
+[DONE] cutadapt 18 samples -> .../AdapterTrimming_result
+[2026-08-20 13:20:41] <== Trimming  01:39:34
+
+[2026-08-20 13:20:41] ==> Alignment
+[LEN ] max trimmed read = 150bp -> sjdbOverhang=149
+[IDX ] reuse .../reference_Genomes/Homo_sapiens/index/overhang149
+[STAR] Control_1
+...
+[DONE] STAR 18 samples -> .../Alignment_result
+       next: probe_strandedness.sh .../rawData/ProjectA/GroupA
+[2026-08-20 19:55:02] <== Alignment  06:34:21
+
+[2026-08-20 19:55:02] ==> probe_strandedness
+[PROBE] sample=Control_1  -s reverse
+...
+```
+
+Four things say it is going right:
+
+| Line | What to check |
+|---|---|
+| `[DONE] FastQC 18 samples` | the count matches the samples you expect — this is the first place a missing file shows up |
+| `[KIT ] ... R1=AGATCGG...` | an adapter was found for your kit. `R2=(none)` is correct for single-end |
+| `[LEN ] ... sjdbOverhang=149` | derived from your trimmed reads. 150 bp reads give 149 |
+| `[IDX ] reuse ...` | an existing index fits. `[IDX ] building ...` instead means a new one is being made — correct, but adds 1–2 hours |
+
+`[SKIP] Control_1` appears when you re-run after an interruption. That is the `.done` marker
+doing its job, not an error.
+
 > **It is fine if it dies partway.** Finished samples leave a `.done` marker, so re-running
 > prints `[SKIP]` for them and resumes where it stopped. Just issue the same command again.
 
@@ -500,6 +543,33 @@ wrong value.
 [ERROR] group.conf strandedness must be no|yes|reverse (got 'empty')
         run: bash Scripts/probe_strandedness.sh rawData/ProjectA/GroupA
 ```
+
+### What a healthy run looks like
+
+```
+[2026-08-20 21:03:11] ==> ReadCount
+[HTSEQ] strandedness=reverse  gtf=Homo_sapiens.GRCh38.113.gtf
+[CNT ] Control_1
+...
+[DONE] HTSeq 18 samples
+       matrix: .../Output/ProjectA/GroupA/GroupA_count_matrix.tsv  (62703 genes x 18 samples)
+[2026-08-20 22:15:40] <== ReadCount  01:12:29
+
+[2026-08-20 22:15:40] ==> CalcCPM
+[CPM ] 62703 genes x 18 samples -> .../GroupA_CPM.tsv
+[2026-08-20 22:15:52] <== CalcCPM  00:00:12
+
+[2026-08-20 22:15:52] ==> MultiQC
+[DONE] .../Output/ProjectA/GroupA/GroupA_pipeline_report.txt
+[2026-08-20 22:16:30] <== MultiQC  00:00:38
+```
+
+No `[WARN]` line is the point here. `[WARN] Control_1: __no_feature 68.3%` means the
+strandedness is wrong — fix `group.conf`, delete the `.done` markers under
+`Processed/.../HTseqCount_result/`, and run stage 2 again.
+
+The gene count depends on the annotation, not on your data: every sample in a group is counted
+against the same GTF, so the matrix has the same number of rows whatever you sequenced.
 
 ---
 
