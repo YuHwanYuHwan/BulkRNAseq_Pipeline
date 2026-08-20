@@ -507,13 +507,17 @@ The last step of stage 1, `probe_strandedness.sh`, counts **a single sample** wi
 ```
 [PROBE] sample=Control_1  -s reverse
 
-  total reads counted : 42817203
-  assigned to genes   : 36129844 (84.4%)
-  __no_feature        : 5891203 (13.8%)
-  __ambiguous         : 796156
+  total reads counted : 18036903
+  assigned to genes   : 8983930 (49.8%)
+  __no_feature        : 7858202 (43.6%)
+  __ambiguous         : 562437
 
-  --> likely strandedness : reverse   (most reads assigned)
+  --> likely strandedness : no        (about half assigned -> unstranded)
 ```
+
+That is a real run, and a good example of why the kit name is not the answer: the library was
+a poly-A prep from a vendor whose standard kit is directional, yet only half the reads land on
+the sense strand. The data says unstranded, so unstranded it is.
 
 `__no_feature` is the **fraction of reads that could not be assigned to any gene**. One reverse
 run separates all three cases:
