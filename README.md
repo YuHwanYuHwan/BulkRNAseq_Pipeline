@@ -8,13 +8,13 @@ rather than rewriting it each time, every project uses this one repository.
 
 ```mermaid
 flowchart TB
-    A["FASTQ<br/><i>sequencer output</i>"] --> B["FastQC<br/><i>quality check</i>"]
-    B --> C["cutadapt<br/><i>adapter removal</i>"]
-    C --> D["STAR<br/><i>align to genome</i>"]
-    D --> E["HTSeq<br/><i>count reads per gene</i>"]
-    E --> F["edgeR<br/><i>TMM / CPM</i>"]
-    F --> G(["count matrix + CPM table"])
-    G -.-> H["differential expression, GO, GSEA<br/><i>your own analysis, not this repository</i>"]
+    A["FASTQ<br/>raw reads"] --> B["FastQC<br/>quality"]
+    B --> C["cutadapt<br/>trimming"]
+    C --> D["STAR<br/>alignment"]
+    D --> E["HTSeq<br/>counting"]
+    E --> F["edgeR<br/>TMM / CPM"]
+    F --> G(["count matrix<br/>+ CPM table"])
+    G -.-> H["your analysis<br/>DEG · GO · GSEA"]
     style G fill:#e8f5e9,stroke:#2e7d32
     style H fill:#f5f5f5,stroke:#9e9e9e,stroke-dasharray:4
 ```
