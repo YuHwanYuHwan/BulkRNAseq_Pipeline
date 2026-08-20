@@ -22,12 +22,12 @@ mkdir -p "$OUT"
 GTF="$(ls "${REF_ROOT}/${species}"/*.gtf | head -1)"
 echo "[HTSEQ] strandedness=$strandedness  gtf=$(basename "$GTF")"
 
-n=0
+n=0 skip=0
 SAMPLES=()
 while IFS=$'\t' read -r sample _ _; do
     SAMPLES+=("$sample")
     CNT="${OUT}/${sample}.gene.counts"
-    if is_done "$OUT" "$sample"; then echo "[SKIP] $sample"; continue; fi
+    if is_done "$OUT" "$sample"; then echo "[SKIP] $sample"; skip=$((skip+1)); continue; fi
     BAM="${ALIGN}/${sample}/${sample}Aligned.sortedByCoord.out.bam"
     [ -s "$BAM" ] || { echo "[ERROR] missing BAM for $sample" >&2; exit 1; }
 
@@ -58,5 +58,9 @@ for s in "${SAMPLES[@]}"; do
 done
 eval "$CMD" >> "$MATRIX"
 
-echo "[DONE] HTSeq $n samples"
+# The counter reports every sample in the group, not only the ones processed this time -
+# a resumed run that skips all of them still has to read as success.
+SKIPMSG=""
+[ "$skip" -gt 0 ] && SKIPMSG="  ($skip already done)"
+echo "[DONE] HTSeq $((n+skip)) samples$SKIPMSG"
 echo "       matrix: $MATRIX  ($(( $(wc -l < "$MATRIX") - 1 )) genes x ${#SAMPLES[@]} samples)"

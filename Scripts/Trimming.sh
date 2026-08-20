@@ -17,9 +17,9 @@ echo "[KIT ] $KIT  R1=$A1  R2=${A2:-(none)}"
 OUT="${PROC_DIR}/AdapterTrimming_result"
 mkdir -p "$OUT"
 
-n=0
+n=0 skip=0
 while IFS=$'	' read -r sample r1 r2; do
-    if is_done "$OUT" "$sample"; then echo "[SKIP] $sample"; continue; fi
+    if is_done "$OUT" "$sample"; then echo "[SKIP] $sample"; skip=$((skip+1)); continue; fi
     echo "[TRIM] $sample"
     # A sample split over several runs is concatenated first - joined gzip stays valid gzip.
     M1="${OUT}/${sample}_1.merged.fastq.gz"; in1="$r1"
@@ -40,4 +40,8 @@ while IFS=$'	' read -r sample r1 r2; do
     n=$((n+1))
 done < <(list_samples)
 
-echo "[DONE] cutadapt $n samples -> $OUT"
+# The counter reports every sample in the group, not only the ones processed this time -
+# a resumed run that skips all of them still has to read as success.
+SKIPMSG=""
+[ "$skip" -gt 0 ] && SKIPMSG="  ($skip already done)"
+echo "[DONE] cutadapt $((n+skip)) samples -> $OUT$SKIPMSG"

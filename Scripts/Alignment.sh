@@ -36,10 +36,10 @@ bash "$(dirname "${BASH_SOURCE[0]}")/RefIndexing.sh" "$species" "$OVERHANG"
 IDX="${REF_ROOT}/${species}/index/overhang${OVERHANG}"
 GTF="$(ls "${REF_ROOT}/${species}"/*.gtf | head -1)"
 
-n=0
+n=0 skip=0
 while IFS=$'\t' read -r sample _ _; do
     SDIR="${OUT}/${sample}"
-    if is_done "$OUT" "$sample"; then echo "[SKIP] $sample"; continue; fi
+    if is_done "$OUT" "$sample"; then echo "[SKIP] $sample"; skip=$((skip+1)); continue; fi
     # STAR refuses to start if _STARtmp from a killed run is left behind
     rm -rf "${SDIR}/_STARtmp"
     mkdir -p "$SDIR"
@@ -70,5 +70,9 @@ while IFS=$'\t' read -r sample _ _; do
     n=$((n+1))
 done < <(list_samples)
 
-echo "[DONE] STAR $n samples -> $OUT"
+# The counter reports every sample in the group, not only the ones processed this time -
+# a resumed run that skips all of them still has to read as success.
+SKIPMSG=""
+[ "$skip" -gt 0 ] && SKIPMSG="  ($skip already done)"
+echo "[DONE] STAR $((n+skip)) samples -> $OUT$SKIPMSG"
 echo "       next: probe_strandedness.sh $GROUP_DIR"

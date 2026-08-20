@@ -10,10 +10,10 @@ init_group "$1"
 OUT="${PROC_DIR}/Fastqc_result"
 mkdir -p "$OUT"
 
-n=0
+n=0 skip=0
 while IFS=$'\t' read -r sample r1 r2; do
     if is_done "$OUT" "$sample"; then
-        echo "[SKIP] $sample"
+        echo "[SKIP] $sample"; skip=$((skip+1))
         continue
     fi
     echo "[FQC ] $sample"
@@ -22,4 +22,8 @@ while IFS=$'\t' read -r sample r1 r2; do
     n=$((n+1))
 done < <(list_samples)
 
-echo "[DONE] FastQC $n samples -> $OUT"
+# The counter reports every sample in the group, not only the ones processed this time -
+# a resumed run that skips all of them still has to read as success.
+SKIPMSG=""
+[ "$skip" -gt 0 ] && SKIPMSG="  ($skip already done)"
+echo "[DONE] FastQC $((n+skip)) samples -> $OUT$SKIPMSG"

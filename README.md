@@ -448,8 +448,15 @@ Four things say it is going right:
 | `[LEN ] ... sjdbOverhang=149` | derived from your trimmed reads. 150 bp reads give 149 |
 | `[IDX ] reuse ...` | an existing index fits. `[IDX ] building ...` instead means a new one is being made — correct, but adds 1–2 hours |
 
-`[SKIP] Control_1` appears when you re-run after an interruption. That is the `.done` marker
-doing its job, not an error.
+`[SKIP] Control_1` appears when you re-run after an interruption — the `.done` marker doing its
+job, not an error. A resumed run reports the group's full size with a note, so the count stays
+comparable:
+
+```
+[SKIP] Control_1
+...
+[DONE] FastQC 18 samples -> .../Fastqc_result  (18 already done)
+```
 
 > **It is fine if it dies partway.** Finished samples leave a `.done` marker, so re-running
 > prints `[SKIP]` for them and resumes where it stopped. Just issue the same command again.
