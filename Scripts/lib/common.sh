@@ -85,9 +85,14 @@ mark_done() { touch "${1}/.${2}.done"; }
 # Trimming makes read length variable, so the MAX must be used - sjdbOverhang has to
 # accommodate the longest read that can span a junction.
 max_read_length() {   # $1=fastq(.gz)  [$2=reads to scan, default 10000]
-    local f="$1" n="${2:-10000}"
-    zcat -f "$f" 2>/dev/null | awk -v n="$n" 'NR%4==2 { if (length($0)>m) m=length($0); c++ }
-                                              c>=n { exit } END { print m+0 }'
+    local f="$1" n="${2:-10000}" m
+    # awk quits after n reads, which SIGPIPEs zcat. Under pipefail that 141 would propagate
+    # and set -e would kill the caller, so the scan is run with pipefail off.
+    set +o pipefail
+    m=$(zcat -f "$f" 2>/dev/null | awk -v n="$n" 'NR%4==2 { if (length($0)>m) m=length($0); c++ }
+                                                  c>=n { exit } END { print m+0 }')
+    set -o pipefail
+    echo "$m"
 }
 
 # Read an HTSeq counts file and report the __no_feature fraction with a strandedness verdict.

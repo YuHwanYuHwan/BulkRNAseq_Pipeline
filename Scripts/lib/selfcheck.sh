@@ -42,13 +42,20 @@ CONF
 
 # Trimming makes read length variable - the MAX must win, not the first read or the mean.
 t_overhang() {
-    local FQ="$TMP/t.fastq" L LZ
+    local FQ="$TMP/t.fastq" L LZ BIG
     { printf '@r1\n%s\n+\n%s\n' "$(printf 'A%.0s' {1..100})" "$(printf 'I%.0s' {1..100})"
       printf '@r2\n%s\n+\n%s\n' "$(printf 'A%.0s' {1..150})" "$(printf 'I%.0s' {1..150})"
       printf '@r3\n%s\n+\n%s\n' "$(printf 'A%.0s' {1..75})"  "$(printf 'I%.0s' {1..75})"; } > "$FQ"
     gzip -cf "$FQ" > "$FQ.gz"
     L=$(max_read_length "$FQ"); LZ=$(max_read_length "$FQ.gz")
     [ "$L" -eq 150 ] && [ "$LZ" -eq 150 ] || { echo "max_read_length plain=$L gz=$LZ (expected 150)"; return 1; }
+
+    # A real FASTQ is far longer than the scan window, so awk exits early and SIGPIPEs zcat.
+    # With pipefail that aborts the whole run - which is invisible on a three-read file.
+    BIG="$TMP/big.fastq.gz"
+    awk 'BEGIN { for (i=0;i<20000;i++) printf "@r%d\nACGTACGTAC\n+\nIIIIIIIIII\n", i }' | gzip -c > "$BIG"
+    L=$(max_read_length "$BIG" 100) || { echo "scan aborted on a file longer than the window"; return 1; }
+    [ "$L" -eq 10 ] || { echo "early-exit scan gave $L (expected 10)"; return 1; }
 }
 
 # runinfo SampleName decides which runs share a merge folder.
