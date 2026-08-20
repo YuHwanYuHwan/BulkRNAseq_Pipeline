@@ -20,29 +20,43 @@ ALIGN="${PROC_DIR}/Alignment_result"
 OUT="${PROC_DIR}/HTseqCount_result"
 mkdir -p "$OUT"
 GTF="$(ls "${REF_ROOT}/${species}"/*.gtf | head -1)"
-echo "[HTSEQ] strandedness=$strandedness  gtf=$(basename "$GTF")"
+
+# Counting a sample already recorded under a different strandedness would be skipped by its
+# .done marker, quietly mixing two settings in one matrix. Changing the value starts over.
+MODE="${OUT}/.strandedness"
+if [ -f "$MODE" ] && [ "$(cat "$MODE")" != "$strandedness" ]; then
+    echo "[HTSEQ] strandedness changed: $(cat "$MODE") -> $strandedness, recounting the group"
+    rm -f "$OUT"/.*.done "$OUT"/*.gene.counts
+fi
+printf '%s' "$strandedness" > "$MODE"
+
+echo "[HTSEQ] strandedness=$strandedness  gtf=$(basename "$GTF")  parallel=$THREADS"
+
+# htseq-count is single-threaded and CPU-bound - measured at ~23k read pairs per second
+# whether one or four run at once. Samples are independent, so they go side by side.
+count_one() {   # $1 = sample
+    local sample="$1" cnt="${OUT}/${1}.gene.counts" bam="${ALIGN}/${1}/${1}Aligned.sortedByCoord.out.bam"
+    [ -s "$bam" ] || { echo "[ERROR] missing BAM for $sample" >&2; return 1; }
+    echo "[CNT ] $sample"
+    htseq-count -r pos -s "$strandedness" "$bam" "$GTF" > "$cnt"
+    # Wrong strandedness produces no error, only a collapsed assignment rate. Warn loudly.
+    awk -F'\t' -v s="$sample" '
+        /^__no_feature/ { nf=$2 } { t+=$2 }
+        END { if (t>0 && 100*nf/t > 50)
+                 printf "[WARN] %s: __no_feature %.1f%% - strandedness may be wrong\n", s, 100*nf/t }' "$cnt"
+    mark_done "$OUT" "$sample"
+}
 
 n=0 skip=0
 SAMPLES=()
 while IFS=$'\t' read -r sample _ _; do
     SAMPLES+=("$sample")
-    CNT="${OUT}/${sample}.gene.counts"
     if is_done "$OUT" "$sample"; then echo "[SKIP] $sample"; skip=$((skip+1)); continue; fi
-    BAM="${ALIGN}/${sample}/${sample}Aligned.sortedByCoord.out.bam"
-    [ -s "$BAM" ] || { echo "[ERROR] missing BAM for $sample" >&2; exit 1; }
-
-    echo "[CNT ] $sample"
-    htseq-count -r pos -s "$strandedness" "$BAM" "$GTF" > "$CNT"
-
-    # Wrong strandedness produces no error, only a collapsed assignment rate. Warn loudly.
-    awk -F'\t' -v s="$sample" '
-        /^__no_feature/ { nf=$2 } { t+=$2 }
-        END { if (t>0 && 100*nf/t > 50)
-                 printf "[WARN] %s: __no_feature %.1f%% - strandedness may be wrong\n", s, 100*nf/t }' "$CNT"
-
-    mark_done "$OUT" "$sample"
+    while [ "$(jobs -rp | wc -l)" -ge "$THREADS" ]; do wait -n; done
+    count_one "$sample" &
     n=$((n+1))
 done < <(list_samples)
+wait
 
 # ── merge into one matrix ────────────────────────────────────────────────────
 MATRIX="${OUT_DIR}/${GROUP}_count_matrix.tsv"

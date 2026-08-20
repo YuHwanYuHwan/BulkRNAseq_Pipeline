@@ -737,7 +737,7 @@ What each stage reserves:
 | Stage | Cores | Memory | Why |
 |---|---|---|---|
 | 1 | 32 | 96 GB | STAR alignment, and building an index if one is missing (that alone wants 32 GB+) |
-| 2 | 8 | 32 GB | HTSeq counts one BAM per call in a single process — more cores would idle |
+| 2 | 12 | 48 GB | one `htseq-count` per core, each holding its own copy of the annotation |
 
 Override per submission when a dataset is unusually large or the queue is busy; the command
 line beats the directives in the file:
@@ -745,6 +745,10 @@ line beats the directives in the file:
 ```bash
 sbatch --cpus-per-task=16 --mem=48G Scripts/run_stage1.sh rawData/ProjectA/GroupA
 ```
+
+Stage 2 scales almost linearly: `htseq-count` is single-threaded and CPU-bound, measured at
+~23,000 read pairs per second whether one or four run side by side. Reserving more cores counts
+more samples at once.
 
 **You do not also have to set `THREADS`.** The scripts read `SLURM_CPUS_PER_TASK`, so the
 tools use exactly what the job reserved — reserve less and they scale down with it.
