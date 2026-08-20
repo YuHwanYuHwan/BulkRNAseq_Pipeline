@@ -24,7 +24,7 @@ flowchart LR
 2. [Installation](#2-installation)
 3. [Adding your data](#3-adding-your-data)
 4. [Writing group.conf](#4-writing-groupconf)
-5. [Running stage 1](#5-running-stage-1) · [on a SLURM cluster](#on-a-slurm-cluster)
+5. [Running stage 1](#5-running-stage-1)
 6. [Deciding strandedness — the one call you make yourself](#6-deciding-strandedness--the-one-call-you-make-yourself)
 7. [Running stage 2](#7-running-stage-2)
 8. [Reading the results](#8-reading-the-results)
@@ -32,6 +32,7 @@ flowchart LR
 10. [Design rules](#10-design-rules)
 11. [Adding a new kit](#11-adding-a-new-kit)
 12. [Self-check](#12-self-check)
+13. [Running on SLURM](#13-running-on-slurm)
 
 ---
 
@@ -83,6 +84,13 @@ cd BulkRNAseq_Pipeline
 ### 2-2. Install the software
 
 All tools go into a single conda environment.
+
+> **A job scheduler is the one thing this cannot install for you.** Everything below comes
+> from conda, but SLURM is part of how a machine is administered — if your cluster does not
+> already have it, adding it is a system administrator's job, not something you can do from
+> your account. You do not need it: `bash` and `nohup` run the pipeline perfectly well, and
+> that is the normal way on a single server. [Section 13](#13-running-on-slurm) covers the
+> cluster case.
 
 ```bash
 bash setup.sh --create-env
@@ -362,6 +370,8 @@ leaves `STAR` or `cutadapt` running as orphans:
 kill -- -$(ps -o pgid= <PID> | tr -d ' ')
 ```
 
+On a cluster you would submit this as a job instead — see [section 13](#13-running-on-slurm).
+
 Every step stamps its start and end, so the log reads as a timeline and a slow step is obvious
 without timing anything yourself:
 
@@ -390,51 +400,6 @@ bash Scripts/Alignment.sh          rawData/ProjectA/GroupA
 bash Scripts/probe_strandedness.sh rawData/ProjectA/GroupA
 ```
 </details>
-
-### On a SLURM cluster
-
-The stage wrappers are valid batch scripts as they are — the `#SBATCH` directives sit inside
-them, so `sbatch` needs no extra arguments.
-
-```bash
-cd ~/BulkRNAseq_Pipeline          # submit from the repository root
-sbatch Scripts/run_stage1.sh rawData/ProjectA/GroupA
-squeue -u $USER
-```
-
-> Submit from the repository root. The log path in the directives is relative
-> (`logs/stage1_%j.out`), so submitting from elsewhere leaves the job nowhere to write and it
-> fails before running anything.
-
-What each stage reserves:
-
-| Stage | Cores | Memory | Why |
-|---|---|---|---|
-| 1 | 32 | 96 GB | STAR alignment, and building an index if one is missing (that alone wants 32 GB+) |
-| 2 | 8 | 32 GB | HTSeq counts one BAM per call in a single process — more cores would idle |
-
-Override per submission when a dataset is unusually large or the queue is busy; the command
-line beats the directives in the file:
-
-```bash
-sbatch --cpus-per-task=16 --mem=48G Scripts/run_stage1.sh rawData/ProjectA/GroupA
-```
-
-**You do not also have to set `THREADS`.** The scripts read `SLURM_CPUS_PER_TASK`, so the
-tools use exactly what the job reserved — reserve less and they scale down with it.
-
-Logs land in `logs/stage1_<jobid>.out` and `logs/stage2_<jobid>.out`, timestamps included, so
-`tail -f` shows which step is running and what the previous one cost.
-
-```bash
-tail -f logs/stage1_*.out
-scancel <jobid>                   # SLURM kills the whole job, orphans and all
-```
-
-**The two stages are deliberately not chained** with `--dependency`. Stage 1 ends at the
-strandedness probe, and that answer is yours to give (section 6); an automatic hand-off would
-run stage 2 before anyone read the result. Within a stage nothing needs chaining either — each
-wrapper is a single job running its steps in order, and `set -e` stops it at the first failure.
 
 ---
 
@@ -638,3 +603,50 @@ This exercises sample scanning, merge grouping, `group.conf` parsing, overhang c
 matrix assembly, and probe interpretation. **It runs with no bioinformatics tool installed**,
 so you can verify the code right after cloning, and use it as a regression check after editing
 a script.
+
+---
+
+## 13. Running on SLURM
+
+The stage wrappers are valid batch scripts as they are — the `#SBATCH` directives sit inside
+them, so `sbatch` needs no extra arguments.
+
+```bash
+cd ~/BulkRNAseq_Pipeline          # submit from the repository root
+sbatch Scripts/run_stage1.sh rawData/ProjectA/GroupA
+squeue -u $USER
+```
+
+> Submit from the repository root. The log path in the directives is relative
+> (`logs/stage1_%j.out`), so submitting from elsewhere leaves the job nowhere to write and it
+> fails before running anything.
+
+What each stage reserves:
+
+| Stage | Cores | Memory | Why |
+|---|---|---|---|
+| 1 | 32 | 96 GB | STAR alignment, and building an index if one is missing (that alone wants 32 GB+) |
+| 2 | 8 | 32 GB | HTSeq counts one BAM per call in a single process — more cores would idle |
+
+Override per submission when a dataset is unusually large or the queue is busy; the command
+line beats the directives in the file:
+
+```bash
+sbatch --cpus-per-task=16 --mem=48G Scripts/run_stage1.sh rawData/ProjectA/GroupA
+```
+
+**You do not also have to set `THREADS`.** The scripts read `SLURM_CPUS_PER_TASK`, so the
+tools use exactly what the job reserved — reserve less and they scale down with it.
+
+Logs land in `logs/stage1_<jobid>.out` and `logs/stage2_<jobid>.out`, timestamps included, so
+`tail -f` shows which step is running and what the previous one cost.
+
+```bash
+tail -f logs/stage1_*.out
+scancel <jobid>                   # SLURM kills the whole job, orphans and all
+```
+
+**The two stages are deliberately not chained** with `--dependency`. Stage 1 ends at the
+strandedness probe, and that answer is yours to give (section 6); an automatic hand-off would
+run stage 2 before anyone read the result. Within a stage nothing needs chaining either — each
+wrapper is a single job running its steps in order, and `set -e` stops it at the first failure.
