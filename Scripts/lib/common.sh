@@ -79,6 +79,26 @@ max_read_length() {   # $1=fastq(.gz)  [$2=reads to scan, default 10000]
                                               c>=n { exit } END { print m+0 }'
 }
 
+# Read an HTSeq counts file and report the __no_feature fraction with a strandedness verdict.
+# Lives here so probe_strandedness.sh and the self-check exercise the same thresholds.
+strand_report() {   # $1 = *.gene.counts
+    awk -F'\t' '
+        /^__/ { special[$1]=$2; tot+=$2; next }
+        { assigned+=$2; tot+=$2 }
+        END {
+            nf = special["__no_feature"]+0
+            printf "\n  total reads counted : %d\n", tot
+            printf "  assigned to genes   : %d (%.1f%%)\n", assigned, 100*assigned/tot
+            printf "  __no_feature        : %d (%.1f%%)\n", nf, 100*nf/tot
+            printf "  __ambiguous         : %d\n\n", special["__ambiguous"]+0
+            r = 100*nf/tot
+            if (r < 35)      verdict = "reverse   (most reads assigned)"
+            else if (r < 65) verdict = "no        (about half assigned -> unstranded)"
+            else             verdict = "yes       (almost nothing assigned -> forward)"
+            printf "  --> likely strandedness : %s\n", verdict
+        }' "$1"
+}
+
 # Tool versions, one line each -> material for pipeline_report.txt
 tool_version() {
     case "$1" in

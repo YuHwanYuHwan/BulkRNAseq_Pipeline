@@ -81,18 +81,14 @@ t_matrix() {
     [ "$(sed -n '2p' "$MATRIX")" = "$(printf 'G1\t10\t30')" ] || { echo "row G1 misaligned"; return 1; }
 }
 
-# __no_feature fraction -> library type. Same thresholds as probe_strandedness.sh.
+# strand_report from common.sh on synthetic counts: does __no_feature map to the right call?
 t_probe_verdict() {
-    local v
-    verdict() {
-        printf 'GENE1\t%d\n__no_feature\t%d\n__ambiguous\t0\n' "$((1000-$1))" "$1" > "$TMP/c"
-        awk -F'\t' '/^__/ { s[$1]=$2; t+=$2; next } { t+=$2 }
-            END { r=100*(s["__no_feature"]+0)/t
-                  if (r<35) print "reverse"; else if (r<65) print "no"; else print "yes" }' "$TMP/c"
-    }
+    local v got
     for v in "150 reverse" "500 no" "850 yes"; do
         set -- $v
-        [ "$(verdict "$1")" = "$2" ] || { echo "$(($1/10))% -> $(verdict "$1") (expected $2)"; return 1; }
+        printf 'GENE1\t%d\n__no_feature\t%d\n__ambiguous\t0\n' "$((1000-$1))" "$1" > "$TMP/c"
+        got=$(strand_report "$TMP/c" | awk '/likely strandedness/ { print $5 }')
+        [ "$got" = "$2" ] || { echo "$(($1/10))% -> $got (expected $2)"; return 1; }
     done
 }
 

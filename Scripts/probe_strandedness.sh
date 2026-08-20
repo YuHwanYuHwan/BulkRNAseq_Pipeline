@@ -26,22 +26,7 @@ echo "[PROBE] sample=$SAMPLE  -s reverse"
 TMP="${PROC_DIR}/.strand_probe.counts"
 htseq-count -r pos -s reverse "$BAM" "$GTF" > "$TMP"
 
-# HTSeq writes __no_feature / __ambiguous / ... as the last lines; everything else is a gene
-awk -F'\t' '
-    /^__/ { special[$1]=$2; tot+=$2; next }
-    { assigned+=$2; tot+=$2 }
-    END {
-        nf = special["__no_feature"]+0
-        printf "\n  total reads counted : %d\n", tot
-        printf "  assigned to genes   : %d (%.1f%%)\n", assigned, 100*assigned/tot
-        printf "  __no_feature        : %d (%.1f%%)\n", nf, 100*nf/tot
-        printf "  __ambiguous         : %d\n\n", special["__ambiguous"]+0
-        r = 100*nf/tot
-        if (r < 35)      verdict = "reverse   (most reads assigned)"
-        else if (r < 65) verdict = "no        (about half assigned -> unstranded)"
-        else             verdict = "yes       (almost nothing assigned -> forward)"
-        printf "  --> likely strandedness : %s\n", verdict
-    }' "$TMP"
+strand_report "$TMP"
 rm -f "$TMP"
 
 cat <<MSG
@@ -51,5 +36,5 @@ cat <<MSG
 
       strandedness = no | yes | reverse
 
-  Then run: bash Scripts/ReadCount.sh ${GROUP_DIR}
+  Then run: bash Scripts/run_stage2.sh ${GROUP_DIR}
 MSG

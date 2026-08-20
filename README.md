@@ -545,8 +545,8 @@ Why the pipeline looks the way it does. Read this before changing anything.
   reads that cross one, and **every sample in a group must use the same value** — otherwise the
   counts are not comparable.
 
-- **A STAR index is kept forever once built**, and recorded in
-  `reference_Genomes/index_registry.tsv`. The next dataset needing the same overhang reuses it.
+- **A STAR index is kept forever once built.** The next dataset needing the same overhang
+  reuses it; the version it was built against is recorded in each group's pipeline report.
 
 - **Samples run serially.** Parallelizing them across SLURM array tasks measured slower: STAR
   saturates I/O and memory bandwidth before CPU, so giving one sample all the cores wins.

@@ -12,10 +12,9 @@ SPECIES="$1"; OVERHANG="$2"
 
 SP_DIR="${REF_ROOT}/${SPECIES}"
 IDX_DIR="${SP_DIR}/index/overhang${OVERHANG}"
-REGISTRY="${REF_ROOT}/index_registry.tsv"
 
 [ -d "$SP_DIR" ] || { echo "[ERROR] $SP_DIR not found. Download the genome first (see README)." >&2; exit 1; }
-FA="$(ls "$SP_DIR"/*.dna.primary_assembly.fa "$SP_DIR"/*.dna.toplevel.fa 2>/dev/null | head -1)"
+FA="$(ls "$SP_DIR"/*.dna.*.fa 2>/dev/null | head -1)"
 GTF="$(ls "$SP_DIR"/*.gtf 2>/dev/null | head -1)"
 [ -n "$FA" ]  || { echo "[ERROR] no genome FASTA in $SP_DIR" >&2; exit 1; }
 [ -n "$GTF" ] || { echo "[ERROR] no GTF in $SP_DIR" >&2; exit 1; }
@@ -40,9 +39,5 @@ STAR --runMode genomeGenerate \
     --runThreadN "$THREADS"
 
 [ -f "${IDX_DIR}/SAindex" ] || { echo "[ERROR] index build failed" >&2; rm -rf "$IDX_DIR"; exit 1; }
-
-[ -s "$REGISTRY" ] || printf 'species\toverhang\tgtf\tstar_version\tbuilt\n' > "$REGISTRY"
-printf '%s\t%s\t%s\t%s\t%s\n' "$SPECIES" "$OVERHANG" "$(basename "$GTF")" \
-    "$(tool_version STAR)" "$(date +%F)" >> "$REGISTRY"
 
 echo "[DONE] $IDX_DIR"

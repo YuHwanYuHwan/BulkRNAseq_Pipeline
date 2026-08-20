@@ -57,8 +57,6 @@ while IFS=$'\t' read -r sample _ _; do
         --outFilterMultimapNmax 10 \
         --outFilterMismatchNoverLmax 0.03 \
         --outSAMtype BAM SortedByCoordinate \
-        --outSAMattributes All \
-        --outSAMunmapped Within \
         --sjdbGTFfile "$GTF" \
         --sjdbOverhang "$OVERHANG" \
         --outFileNamePrefix "${SDIR}/${sample}"

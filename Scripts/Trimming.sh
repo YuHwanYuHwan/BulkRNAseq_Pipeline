@@ -17,27 +17,23 @@ echo "[KIT ] $KIT  R1=$A1  R2=${A2:-(none)}"
 OUT="${PROC_DIR}/AdapterTrimming_result"
 mkdir -p "$OUT"
 
-# Several runs are concatenated (concatenated gzip streams stay valid gzip)
-merge_runs() {   # $1=comma list  $2=output path  -> prints the path to actually use
-    local list="$1" out="$2"
-    if [[ "$list" == *,* ]]; then
-        [ -s "$out" ] || cat ${list//,/ } > "$out"
-        echo "$out"
-    else
-        echo "$list"
-    fi
-}
-
 n=0
 while IFS=$'	' read -r sample r1 r2; do
     if is_done "$OUT" "$sample"; then echo "[SKIP] $sample"; continue; fi
     echo "[TRIM] $sample"
-    in1=$(merge_runs "$r1" "${OUT}/${sample}_1.merged.fastq.gz")
+    # A sample split over several runs is concatenated first - joined gzip stays valid gzip.
+    M1="${OUT}/${sample}_1.merged.fastq.gz"; in1="$r1"
+    [[ "$r1" == *,* ]] && { cat ${r1//,/ } > "$M1"; in1="$M1"; }
     if [ -n "$r2" ]; then
-        in2=$(merge_runs "$r2" "${OUT}/${sample}_2.merged.fastq.gz")
-        cutadapt -j "$THREADS" -a "$A1" -A "$A2" --pair-filter=any --minimum-length 20             -o "${OUT}/${sample}_1_trimmed.fastq.gz" -p "${OUT}/${sample}_2_trimmed.fastq.gz"             "$in1" "$in2" > "${OUT}/${sample}.cutadapt.log"
+        M2="${OUT}/${sample}_2.merged.fastq.gz"; in2="$r2"
+        [[ "$r2" == *,* ]] && { cat ${r2//,/ } > "$M2"; in2="$M2"; }
+        cutadapt -j "$THREADS" -a "$A1" -A "$A2" --pair-filter=any --minimum-length 20 \
+            -o "${OUT}/${sample}_1_trimmed.fastq.gz" -p "${OUT}/${sample}_2_trimmed.fastq.gz" \
+            "$in1" "$in2" > "${OUT}/${sample}.cutadapt.log"
     else
-        cutadapt -j "$THREADS" -a "$A1" --minimum-length 20             -o "${OUT}/${sample}_trimmed.fastq.gz"             "$in1" > "${OUT}/${sample}.cutadapt.log"
+        cutadapt -j "$THREADS" -a "$A1" --minimum-length 20 \
+            -o "${OUT}/${sample}_trimmed.fastq.gz" \
+            "$in1" > "${OUT}/${sample}.cutadapt.log"
     fi
     rm -f "${OUT}/${sample}"_[12].merged.fastq.gz
     mark_done "$OUT" "$sample"
