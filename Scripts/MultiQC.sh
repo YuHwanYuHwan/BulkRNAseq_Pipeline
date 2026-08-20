@@ -61,7 +61,8 @@ cat > "$REPORT" <<TXT
     R2          ${A2:-(single-end)}
   cutadapt      --minimum-length 20 --pair-filter=any
   STAR          --outFilterMismatchNoverLmax 0.03 --outFilterMultimapNmax 10
-                --sjdbOverhang ${OVERHANG} --outSAMtype BAM SortedByCoordinate
+                --outSAMtype BAM SortedByCoordinate
+                (annotation and sjdbOverhang ${OVERHANG} come from the index)
   HTSeq         -r pos -s ${strandedness}
   normalization edgeR TMM -> CPM
 

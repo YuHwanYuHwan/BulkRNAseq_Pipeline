@@ -34,7 +34,9 @@ echo "$OVERHANG" > "${PROC_DIR}/.overhang"   # picked up by MultiQC.sh for the r
 
 bash "$(dirname "${BASH_SOURCE[0]}")/RefIndexing.sh" "$species" "$OVERHANG"
 IDX="${REF_ROOT}/${species}/index/overhang${OVERHANG}"
-GTF="$(ls "${REF_ROOT}/${species}"/*.gtf | head -1)"
+# The index was built from the GTF, so the annotation is already in it. Passing --sjdbGTFfile
+# here as well makes STAR re-insert the same junctions for every sample - minutes and extra
+# memory each time, for a splice database it already has.
 
 n=0 skip=0
 while IFS=$'\t' read -r sample _ _; do
@@ -57,8 +59,6 @@ while IFS=$'\t' read -r sample _ _; do
         --outFilterMultimapNmax 10 \
         --outFilterMismatchNoverLmax 0.03 \
         --outSAMtype BAM SortedByCoordinate \
-        --sjdbGTFfile "$GTF" \
-        --sjdbOverhang "$OVERHANG" \
         --outFileNamePrefix "${SDIR}/${sample}"
 
     BAM="${SDIR}/${sample}Aligned.sortedByCoord.out.bam"
