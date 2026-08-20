@@ -49,7 +49,9 @@ NFSTAT=$(awk -F'\t' '/^__no_feature/ { nf[FILENAME]=$2 } { t[FILENAME]+=$2 }
 # Short forms for the prose paragraph
 DEPTH_PROSE=$(sed -E 's/mean ([0-9.]+M).*/an average of \1/' <<< "${DEPTH:-n\/a}")
 MAP_PROSE=$(sed -E 's/mean ([0-9.]+%).*/\1/' <<< "${MAPSTAT:-n\/a}")
-STAR_VER=$(tool_version STAR | sed 's/^STAR /v/')
+V_FASTQC=$(tool_version fastqc);   V_CUTADAPT=$(tool_version cutadapt)
+V_STAR=$(tool_version STAR);       V_HTSEQ=$(tool_version htseq)
+V_MULTIQC=$(tool_version multiqc); V_R=$(tool_version R); V_EDGER=$(tool_version edgeR)
 
 REPORT="${OUT_DIR}/${GROUP}_pipeline_report.txt"
 cat > "$REPORT" <<TXT
@@ -67,12 +69,17 @@ cat > "$REPORT" <<TXT
   STAR index    overhang ${OVERHANG}
 
 [ Software ]
-  $(tool_version fastqc)
-  $(tool_version cutadapt)
-  $(tool_version STAR)
-  $(tool_version htseq)
-  $(tool_version multiqc)
-  $(tool_version R)
+  FastQC        v.${V_FASTQC:-?}
+  Cutadapt      v.${V_CUTADAPT:-?}
+  STAR          v.${V_STAR:-?}
+  HTSeq-count   v.${V_HTSEQ:-?}
+  edgeR         v.${V_EDGER:-?}
+  R             v.${V_R:-?}
+  MultiQC       v.${V_MULTIQC:-?}
+
+  ready to paste:
+  FastQC (v.${V_FASTQC:-?}), Cutadapt (v.${V_CUTADAPT:-?}), STAR (v.${V_STAR:-?}),
+  HTSeq-count (v.${V_HTSEQ:-?}), edgeR (v.${V_EDGER:-?}) on R (v.${V_R:-?})
 
 [ Parameters ]
   adapter kit   ${KIT}
@@ -93,12 +100,14 @@ cat > "$REPORT" <<TXT
 
 [ Methods draft ]
   Sequencing was ${LAYOUT} at ${READLEN} bp, with ${DEPTH_PROSE} reads per sample. Raw
-  reads were assessed with FastQC and adapters were removed with cutadapt (minimum
-  length 20 bp). Trimmed reads were aligned to the ${SPECIES_PROSE} ${BUILD:-} reference
-  genome with STAR ${STAR_VER} (sjdbOverhang ${OVERHANG}, mismatch rate <= 0.03, up to 10
-  multimapping loci) using Ensembl release ${RELEASE} annotation; ${MAP_PROSE} of reads
-  mapped uniquely. Gene-level counts were obtained with HTSeq-count in ${STRAND_PROSE} and
-  normalized to counts per million using the TMM method in edgeR.
+  reads were assessed with FastQC (v.${V_FASTQC:-?}) and adapters were removed with
+  Cutadapt (v.${V_CUTADAPT:-?}; minimum length 20 bp). Trimmed reads were aligned to the
+  ${SPECIES_PROSE} ${BUILD:-} reference genome (Ensembl release ${RELEASE}) with STAR
+  (v.${V_STAR:-?}; sjdbOverhang ${OVERHANG}, mismatch rate <= 0.03, up to 10 multimapping
+  loci); ${MAP_PROSE} of reads mapped uniquely. Gene-level counts were obtained with
+  HTSeq-count (v.${V_HTSEQ:-?}) in ${STRAND_PROSE} and normalised to counts per million
+  via the trimmed mean of M-values (TMM) method in edgeR (v.${V_EDGER:-?}) running on
+  R (v.${V_R:-?}).
 TXT
 
 echo "[DONE] $REPORT"

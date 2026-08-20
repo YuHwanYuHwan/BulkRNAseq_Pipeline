@@ -115,14 +115,19 @@ strand_report() {   # $1 = *.gene.counts
         }' "$1"
 }
 
-# Tool versions, one line each -> material for pipeline_report.txt
+# Bare version number for each tool. Every tool prints its version differently
+# ("multiqc, version 1.35", "R version 4.5.3 (2026-03-11) -- ..."), so the first
+# dotted number is taken and the caller decides how to present it.
 tool_version() {
+    local raw=""
     case "$1" in
-        fastqc)   "$FASTQC_BIN" --version 2>&1 | head -1 ;;
-        cutadapt) echo "cutadapt $(cutadapt --version 2>&1 | head -1)" ;;
-        STAR)     STAR --version 2>&1 | head -1 | sed 's/^/STAR /' ;;
-        htseq)    htseq-count --version 2>&1 | head -1 | sed 's/^/HTSeq /' ;;
-        multiqc)  multiqc --version 2>&1 | head -1 ;;
-        R)        R --version 2>&1 | head -1 ;;
+        fastqc)   raw=$("$FASTQC_BIN" --version 2>&1) ;;
+        cutadapt) raw=$(cutadapt --version 2>&1) ;;
+        STAR)     raw=$(STAR --version 2>&1) ;;
+        htseq)    raw=$(htseq-count --version 2>&1) ;;
+        multiqc)  raw=$(multiqc --version 2>&1) ;;
+        R)        raw=$(R --version 2>&1) ;;
+        edgeR)    raw=$(Rscript -e 'cat(as.character(packageVersion("edgeR")))' 2>/dev/null) ;;
     esac
+    grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)?[a-z]?' <<< "$raw" | head -1
 }
