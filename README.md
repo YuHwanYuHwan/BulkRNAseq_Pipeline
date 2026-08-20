@@ -694,8 +694,52 @@ is deliberately not part of this repository: preprocessing is identical everywhe
 comparison you run is specific to your question.
 
 **`pipeline_report.txt`** exists for the day you write the paper. It records the tool versions,
-parameters, and genome release, and includes a draft Methods paragraph — so that a year later
-you are not hunting for which STAR version you used.
+parameters, and genome release, and ends with a Methods paragraph you can edit rather than
+compose — so that a year later you are not hunting for which STAR version you used.
+
+<details>
+<summary>What the report contains</summary>
+
+```
+[ Reference ]
+  species       Homo sapiens  (GRCh38)
+  annotation    Homo_sapiens.GRCh38.113.gtf   (Ensembl release 113)
+  STAR index    overhang 149
+
+[ Software ]
+  FastQC        v.0.12.1
+  Cutadapt      v.5.2
+  STAR          v.2.7.11b
+  HTSeq-count   v.2.1.2
+  edgeR         v.4.6.3
+  R             v.4.5.3
+  MultiQC       v.1.35
+
+  ready to paste:
+  FastQC (v.0.12.1), Cutadapt (v.5.2), STAR (v.2.7.11b),
+  HTSeq-count (v.2.1.2), edgeR (v.4.6.3) on R (v.4.5.3)
+
+[ QC summary ]
+  input reads       mean 22.3M  range 17.9-32.2M   per sample, after trimming
+  uniquely mapped   mean 93.7%  min 92.0%
+  __no_feature      mean 2.9%  max 3.3%
+
+[ Methods draft ]
+  Sequencing was paired-end at 150 bp, with an average of 22.3M reads per sample. Raw
+  reads were assessed with FastQC (v.0.12.1) and adapters were removed with
+  Cutadapt (v.5.2; minimum length 20 bp). Trimmed reads were aligned to the
+  Homo sapiens GRCh38 reference genome (Ensembl release 113) with STAR
+  (v.2.7.11b; sjdbOverhang 149, mismatch rate <= 0.03, up to 10 multimapping
+  loci); 93.7% of reads mapped uniquely. Gene-level counts were obtained with
+  HTSeq-count (v.2.1.2) in unstranded mode and normalised to counts per million
+  via the trimmed mean of M-values (TMM) method in edgeR (v.4.6.3) running on
+  R (v.4.5.3).
+```
+
+Versions are read from the installed tools at run time, not hardcoded, so the report describes
+the run that actually happened. Whatever you do downstream — expression filtering, the
+comparisons you test — is yours to add; the report stops where the pipeline does.
+</details>
 
 <details>
 <summary>What to look at in the MultiQC report</summary>
