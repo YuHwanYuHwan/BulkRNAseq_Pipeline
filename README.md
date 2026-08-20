@@ -369,6 +369,19 @@ already inside it.
 sbatch Scripts/run_stage1.sh rawData/ProjectA/GroupA
 ```
 
+Every step stamps its start and end, so the log reads as a timeline and a slow step is obvious
+without timing anything yourself:
+
+```
+[2026-08-20 11:02:14] ==> FastQC
+[FQC ] Control_1
+...
+[2026-08-20 11:41:07] <== FastQC  00:38:53
+[2026-08-20 11:41:07] ==> Trimming
+```
+
+A failed step is stamped too, with its exit code.
+
 > **It is fine if it dies partway.** Finished samples leave a `.done` marker, so re-running
 > prints `[SKIP]` for them and resumes where it stopped. Just issue the same command again.
 

@@ -6,6 +6,7 @@ set -uo pipefail
 TMP=$(mktemp -d); trap 'rm -rf "$TMP"' EXIT
 ROOT="$TMP/repo"; mkdir -p "$ROOT/Scripts/lib"
 cp "$(dirname "${BASH_SOURCE[0]}")/common.sh" "$ROOT/Scripts/lib/"
+SELFCHECK=1                                   # keep the step timestamps out of the report
 source "$ROOT/Scripts/lib/common.sh"          # PIPELINE_ROOT now points at the fake repo
 
 # Flat file = one sample, subdirectory = one sample whose runs are merged.

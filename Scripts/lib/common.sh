@@ -19,6 +19,17 @@ FASTQC_BIN="${FASTQC_BIN:-fastqc}"
 # shared head node; nproc is the last resort.
 THREADS="${SLURM_CPUS_PER_TASK:-${THREADS:-$(nproc)}}"
 
+# Every step stamps its own start and end, so a stage log reads as a timeline and a slow step
+# is obvious without instrumenting anything. The EXIT trap fires on failure too.
+if [ -z "${SELFCHECK:-}" ]; then
+    STEP="$(basename "$0" .sh)"
+    SECONDS=0
+    printf '[%s] ==> %s\n' "$(date '+%F %T')" "$STEP"
+    trap 'rc=$?; printf "[%s] <== %s  %02d:%02d:%02d%s\n" "$(date "+%F %T")" "$STEP" \
+        $((SECONDS/3600)) $((SECONDS%3600/60)) $((SECONDS%60)) \
+        "$([ $rc -ne 0 ] && echo "  FAILED rc=$rc")"' EXIT
+fi
+
 # group dir -> project/group relative path. Processed/ and Output/ mirror the same layout.
 init_group() {
     GROUP_DIR="$(cd "$1" && pwd)"
